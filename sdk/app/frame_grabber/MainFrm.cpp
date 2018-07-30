@@ -142,7 +142,7 @@ LRESULT CMainFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 void CMainFrame::scanModeSelect(int mode)
 {
-    if(mode >= scanModeMenuRecBegin_ && mode < scanModeMenuRecBegin_ + modeVec_.size())
+    if((unsigned int)mode >= scanModeMenuRecBegin_ && (unsigned int)mode < scanModeMenuRecBegin_ + modeVec_.size())
     {
         usingScanMode_ = mode - scanModeMenuRecBegin_;
         onSwitchMode(WORKING_MODE_SCAN);
@@ -262,11 +262,11 @@ LRESULT CMainFrame::OnFileDumpdata(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOO
 
 void    CMainFrame::onRefreshScanData()
 {
-    rplidar_response_measurement_node_t nodes[8192];
+    rplidar_response_measurement_node_hq_t nodes[8192];
     size_t cnt = _countof(nodes);
     RPlidarDriver * lidar_drv = LidarMgr::GetInstance().lidar_drv;
 
-    if (IS_OK(lidar_drv->grabScanData(nodes, cnt, 0)))
+    if (IS_OK(lidar_drv->grabScanDataHq(nodes, cnt, 0)))
     {
         float sampleDurationRefresh = modeVec_[usingScanMode_].us_per_sample;
         m_scanview.setScanData(nodes, cnt, sampleDurationRefresh);

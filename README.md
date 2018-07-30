@@ -12,6 +12,11 @@ If you are using ROS (Robot Operating System), please use our open-source ROS no
 
 If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(https://www.slamtec.com/robostudio) (currently only support Windows) to do the evaulation.
 
+Release Notes
+-------------
+
+v1.8.0(https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.0.md)
+
 Supported Platforms
 -------------------
 

@@ -124,5 +124,5 @@ protected:
 
     //subMenu of scan mode
     CMenu scanModeSubMenu_;
-    int scanModeMenuRecBegin_;
+    size_t scanModeMenuRecBegin_;
 };

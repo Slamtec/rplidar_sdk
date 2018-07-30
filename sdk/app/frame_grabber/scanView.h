@@ -62,7 +62,7 @@ public:
 
 
     void onDrawSelf(CDCHandle dc);
-    void setScanData(rplidar_response_measurement_node_t *buffer, size_t count, float sampleDuration);
+    void setScanData(rplidar_response_measurement_node_hq_t *buffer, size_t count, float sampleDuration);
     void stopScan();
     CScanView();
 

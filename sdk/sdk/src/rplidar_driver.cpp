@@ -53,6 +53,19 @@
 
 namespace rp { namespace standalone{ namespace rplidar {
 
+#define DEPRECATED_WARN(fn, replacement) do { \
+        static bool __shown__ = false; \
+        if (!__shown__) { \
+            printDeprecationWarn(fn, replacement); \
+            __shown__ = true; \
+        } \
+    } while (0)
+
+    static void printDeprecationWarn(const char* fn, const char* replacement)
+    {
+        fprintf(stderr, "*WARN* YOU ARE USING DEPRECATED API: %s, PLEASE MOVE TO %s\n", fn, replacement);
+    }
+
 static void convert(const rplidar_response_measurement_node_t& from, rplidar_response_measurement_node_hq_t& to)
 {
     to.angle_z_q14 = (((from.angle_q6_checkbit) >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) << 8) / 90;  //transfer to q14 Z-angle
@@ -247,6 +260,8 @@ u_result RPlidarDriverImplCommon::getDeviceInfo(rplidar_response_device_info_t &
 
 u_result RPlidarDriverImplCommon::getFrequency(bool inExpressMode, size_t count, float & frequency, bool & is4kmode)
 {
+    DEPRECATED_WARN("getFrequency(bool,size_t,float&,bool&)", "getFrequency(const RplidarScanMode&,size_t,float&)");
+
     _u16 sample_duration = inExpressMode?_cached_sampleduration_express:_cached_sampleduration_std;
     frequency = 1000000.0f/(count * sample_duration);
 
@@ -610,6 +625,8 @@ u_result RPlidarDriverImplCommon::startScanNormal(bool force,  _u32 timeout)
 
 u_result RPlidarDriverImplCommon::checkExpressScanSupported(bool & support, _u32 timeout)
 {
+    DEPRECATED_WARN("checkExpressScanSupported(bool&,_u32)", "getAllSupportedScanModes()");
+
     rplidar_response_device_info_t devinfo;
 
     support = false;
@@ -1455,6 +1472,8 @@ u_result RPlidarDriverImplCommon::stop(_u32 timeout)
 
 u_result RPlidarDriverImplCommon::grabScanData(rplidar_response_measurement_node_t * nodebuffer, size_t & count, _u32 timeout)
 {
+    DEPRECATED_WARN("grabScanData()", "grabScanDataHq()");
+
     switch (_dataEvt.wait(timeout))
     {
     case rp::hal::Event::EVENT_TIMEOUT:
@@ -1511,6 +1530,8 @@ u_result RPlidarDriverImplCommon::grabScanDataHq(rplidar_response_measurement_no
 
 u_result RPlidarDriverImplCommon::getScanDataWithInterval(rplidar_response_measurement_node_t * nodebuffer, size_t & count)
 {
+    DEPRECATED_WARN("getScanDataWithInterval(rplidar_response_measurement_node_t*, size_t&)", "getScanDataWithInterval(rplidar_response_measurement_node_hq_t*, size_t&)");
+
     size_t size_to_copy = 0;
     {
         rp::hal::AutoLocker l(_lock);
@@ -1644,6 +1665,8 @@ static u_result ascendScanData_(TNode * nodebuffer, size_t count)
 
 u_result RPlidarDriverImplCommon::ascendScanData(rplidar_response_measurement_node_t * nodebuffer, size_t count)
 {
+    DEPRECATED_WARN("ascendScanData(rplidar_response_measurement_node_t*, size_t)", "ascendScanData(rplidar_response_measurement_node_hq_t*, size_t)");
+
     return ascendScanData_<rplidar_response_measurement_node_t>(nodebuffer, count);
 }
 
@@ -1696,6 +1719,8 @@ u_result RPlidarDriverImplCommon::_sendCommand(_u8 cmd, const void * payload, si
 
 u_result RPlidarDriverImplCommon::getSampleDuration_uS(rplidar_response_sample_rate_t & rateInfo, _u32 timeout)
 {  
+    DEPRECATED_WARN("getSampleDuration_uS", "RplidarScanMode::us_per_sample");
+
     if (!isConnected()) return RESULT_OPERATION_FAIL;
     
     _disableDataGrabbing();
@@ -1916,7 +1941,7 @@ u_result RPlidarDriverTCP::connect(const char * ipStr, _u32 port, _u32 flag)
         rp::hal::AutoLocker l(_lock);
 
         // establish the serial connection...
-        if(_chanDev->bind(ipStr, port))
+        if(!_chanDev->bind(ipStr, port))
             return RESULT_INVALID_DATA;
     }
 
