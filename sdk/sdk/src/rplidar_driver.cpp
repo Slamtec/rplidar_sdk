@@ -940,7 +940,15 @@ void RPlidarDriverImplCommon::_ultraCapsuleToNormal(const rplidar_response_ultra
 
                 syncBit[cpos] = (((currentAngle_raw_q16 + angleInc_q16) % (360 << 16)) < angleInc_q16) ? 1 : 0;
 
-                const int offsetAngleMean_q16 = (int)(7.5 * 3.1415926535 * (1 << 16) / 180.0);
+                int offsetAngleMean_q16 = (int)(7.5 * 3.1415926535 * (1 << 16) / 180.0);
+
+                if (dist_q2[cpos] >= (50 * 4))
+                {
+                    const int k1 = 98361;
+                    const int k2 = int(k1 / dist_q2[cpos]);
+
+                    offsetAngleMean_q16 = (int)(8 * 3.1415926535 * (1 << 16) / 180) - (k2 << 6) - (k2 * k2 * k2) / 98304;
+                }
 
                 angle_q6[cpos] = ((currentAngle_raw_q16 - int(offsetAngleMean_q16 * 180 / 3.14159265)) >> 10);
                 currentAngle_raw_q16 += angleInc_q16;

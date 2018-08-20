@@ -35,7 +35,8 @@
 static const int baudRateLists[] = {
     115200,
     256000,
-    57600
+    57600,
+    1382400
 };
 
 CSerialSelDlg::CSerialSelDlg()
