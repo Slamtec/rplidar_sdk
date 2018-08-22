@@ -15,6 +15,7 @@ If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(https://www.s
 Release Notes
 -------------
 
+* [v1.9.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.9.0.md)
 * [v1.8.1](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.1.md)
 * [v1.8.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.0.md)
 

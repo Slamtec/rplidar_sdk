@@ -821,6 +821,216 @@ void     RPlidarDriverImplCommon::_capsuleToNormal(const rplidar_response_capsul
     _is_previous_capsuledataRdy = true;
 }
 
+//*******************************************HQ support********************************
+u_result RPlidarDriverImplCommon::_cacheHqScanData()
+{
+    rplidar_response_hq_capsule_measurement_nodes_t    hq_node;
+    rplidar_response_measurement_node_hq_t   local_buf[128];
+    size_t                                   count = 128;
+    rplidar_response_measurement_node_hq_t   local_scan[MAX_SCAN_NODES];
+    size_t                                   scan_count = 0;
+    u_result                                 ans;
+    memset(local_scan, 0, sizeof(local_scan));
+    _waitHqNode(hq_node);
+    while (_isScanning) {
+        if (IS_FAIL(ans = _waitHqNode(hq_node))) {
+            if (ans != RESULT_OPERATION_TIMEOUT && ans != RESULT_INVALID_DATA) {
+                _isScanning = false;
+                return RESULT_OPERATION_FAIL;
+            }
+            else {
+				// current data is invalid, do not use it.
+				continue;
+            }
+        }
+
+        _HqToNormal(hq_node, local_buf, count);
+        for (size_t pos = 0; pos < count; ++pos)
+        {
+            if (local_buf[pos].flag & RPLIDAR_RESP_MEASUREMENT_SYNCBIT)
+            {
+				// only publish the data when it contains a full 360 degree scan 
+                if ((local_scan[0].flag & RPLIDAR_RESP_MEASUREMENT_SYNCBIT)) {
+                    _lock.lock();
+                    memcpy(_cached_scan_node_hq_buf, local_scan, scan_count * sizeof(rplidar_response_measurement_node_hq_t));
+                    _cached_scan_node_hq_count = scan_count;
+                    _dataEvt.set();
+                    _lock.unlock();
+                }
+                scan_count = 0;
+            }
+            local_scan[scan_count++] = local_buf[pos];
+            if (scan_count == _countof(local_scan)) scan_count -= 1; // prevent overflow
+																	 //for interval retrieve
+            {
+                rp::hal::AutoLocker l(_lock);
+                _cached_scan_node_hq_buf_for_interval_retrieve[_cached_scan_node_hq_count_for_interval_retrieve++] = local_buf[pos];
+                if (_cached_scan_node_hq_count_for_interval_retrieve == _countof(_cached_scan_node_hq_buf_for_interval_retrieve)) _cached_scan_node_hq_count_for_interval_retrieve -= 1; // prevent overflow
+            }
+        }
+
+    }
+    return RESULT_OK;
+}
+
+//CRC calculate
+static _u32 table[256];//crc32_table
+
+//reflect
+static _u32 _bitrev(_u32 input, _u16 bw)
+{
+    _u16 i;
+    _u32 var;
+    var = 0;
+    for (i = 0; i<bw; i++){
+        if (input & 0x01)
+        {
+            var |= 1 << (bw - 1 - i);
+        }
+        input >>= 1;
+    }
+    return var;
+}
+
+// crc32_table init
+static void _crc32_init(_u32 poly)
+{
+    _u16 i;
+    _u16 j;
+    _u32 c;
+    
+    poly = _bitrev(poly, 32);
+    for (i = 0; i<256; i++){
+        c = i;
+        for (j = 0; j<8; j++){
+            if (c & 1)
+                c = poly ^ (c >> 1);
+            else
+                c = c >> 1;
+        }
+        table[i] = c;
+    }
+}
+
+static _u32 _crc32cal(_u32 crc, void* input, _u16 len)
+{
+    _u16 i;
+    _u8 index;
+    _u8* pch;
+    pch = (unsigned char*)input;
+    _u8 leftBytes = 4 - len & 0x3;
+
+    for (i = 0; i<len; i++){
+        index = (unsigned char)(crc^*pch);
+        crc = (crc >> 8) ^ table[index];
+        pch++;
+    }
+
+    for (i = 0; i < leftBytes; i++) {//zero padding
+        index = (unsigned char)(crc^0);
+        crc = (crc >> 8) ^ table[index];
+    }
+    return crc^0xffffffff;
+}
+
+//crc32cal
+static u_result _crc32(_u8 *ptr, _u32 len) {
+	static _u8 tmp;
+	if (tmp != 1) {
+		_crc32_init(0x4C11DB7);
+		tmp = 1;
+	}
+	
+	return _crc32cal(0xFFFFFFFF, ptr,len);
+}
+
+u_result RPlidarDriverImplCommon::_waitHqNode(rplidar_response_hq_capsule_measurement_nodes_t & node, _u32 timeout)
+{
+    if (!_isConnected) {
+        return RESULT_OPERATION_FAIL;
+    }
+
+    int  recvPos = 0;
+    _u32 startTs = getms();
+    _u8  recvBuffer[sizeof(rplidar_response_hq_capsule_measurement_nodes_t)];
+    _u8 *nodeBuffer = (_u8*)&node;
+    _u32 waitTime;
+    
+    while ((waitTime=getms() - startTs) <= timeout) {
+        size_t remainSize = sizeof(rplidar_response_hq_capsule_measurement_nodes_t) - recvPos;
+        size_t recvSize;
+        
+        bool ans = _chanDev->waitfordata(remainSize, timeout-waitTime, &recvSize);
+        if(!ans)
+        {
+            return RESULT_OPERATION_TIMEOUT;
+        }
+        if (recvSize > remainSize) recvSize = remainSize;
+        
+        recvSize = _chanDev->recvdata(recvBuffer, recvSize);
+    
+        for (size_t pos = 0; pos < recvSize; ++pos) {
+            _u8 currentByte = recvBuffer[pos];
+            switch (recvPos) {
+            case 0: // expect the sync byte
+                {
+                    _u8 tmp = (currentByte);
+                    if ( tmp == RPLIDAR_RESP_MEASUREMENT_HQ_SYNC ) {
+                    // pass
+                    }
+                    else {
+                        recvPos = 0;
+                        _is_previous_HqdataRdy = false;
+                        continue;
+                    }
+                }
+           break;
+           case sizeof(rplidar_response_hq_capsule_measurement_nodes_t) - 1 - 4: 
+            {
+
+            }
+           break;
+           case sizeof(rplidar_response_hq_capsule_measurement_nodes_t) - 1: 
+            {				
+
+            }
+           break;
+           }
+           nodeBuffer[recvPos++] = currentByte;
+           if (recvPos == sizeof(rplidar_response_hq_capsule_measurement_nodes_t)) {
+                _u32 crcCalc2 = _crc32(nodeBuffer, sizeof(rplidar_response_hq_capsule_measurement_nodes_t) - 4);
+
+                if(crcCalc2 == node.crc32){
+                    _is_previous_HqdataRdy = true;
+                    return RESULT_OK;
+                }
+                else {
+                    _is_previous_HqdataRdy = false;
+                    return RESULT_INVALID_DATA;
+                }
+
+            }
+        }
+    }
+    _is_previous_HqdataRdy = false;
+    return RESULT_OPERATION_TIMEOUT;
+}
+
+void RPlidarDriverImplCommon::_HqToNormal(const rplidar_response_hq_capsule_measurement_nodes_t & node_hq, rplidar_response_measurement_node_hq_t *nodebuffer, size_t &nodeCount) 
+{
+    nodeCount = 0;
+    if (_is_previous_HqdataRdy) {
+        for (size_t pos = 0; pos < _countof(_cached_previous_Hqdata.node_hq); ++pos)
+        {
+            nodebuffer[nodeCount++] = node_hq.node_hq[pos];
+        }	
+    }
+    _cached_previous_Hqdata = node_hq;
+    _is_previous_HqdataRdy = true;
+
+}
+//*******************************************HQ support********************************//
+
 static _u32 _varbitscale_decode(_u32 scaled, _u32 & scaleLevel)
 {
     static const _u32 VBS_SCALED_BASE[] = {
@@ -1445,7 +1655,14 @@ u_result RPlidarDriverImplCommon::startScanExpress(bool force, _u16 scanMode, _u
             }
             _isScanning = true;
             _cachethread = CLASS_THREAD(RPlidarDriverImplCommon, _cacheCapsuledScanData);
-        }
+		}else if(scanAnsType ==RPLIDAR_ANS_TYPE_MEASUREMENT_HQ ){
+			 if (header_size < sizeof(rplidar_response_hq_capsule_measurement_nodes_t)) {
+                return RESULT_INVALID_DATA;
+            }
+			 _isScanning = true;
+			 _cachethread = CLASS_THREAD(RPlidarDriverImplCommon, _cacheHqScanData);
+		
+		}
         else
         {
             if (header_size < sizeof(rplidar_response_ultra_capsule_measurement_nodes_t)) {
