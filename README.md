@@ -218,3 +218,31 @@ Contact Slamtec
 If you have any extra questions, please feel free to contact us at our support email:
 
     support AT slamtec DOT com
+    
+    
+## Python3 Driver and Viewer
+
+RPLidar Viewer Instructions:
+
+    Mouse: 
+        Left Click and Hold - moves (translates) the scan data on the screen
+        Right Click and Hold -  rotates the scan data on the screen (display purposes only, i.e., recorded scan data is unaffected)
+        Mouse Wheel - forward to zoom in, backwards to zoom out
+        Double Left Click - re-center the scan data
+        Double Right Click - re-orientate (rotate) the scan data
+        Double Middle Click - reset the zoom level
+
+    Keyboard:
+        r key    - toogles the faint ray traces on/off within the viewer
+        [/{ key - increases point size
+        ]/} key - decreases point size
+        =/+ key - zooms in
+        -/_ key - zooms out
+        Up/Down/Left/Right keys - moves the scan data in the respective direction
+        ,/< key    - rotates the scan data counter-clockwise
+        ./> key - rotates the scan data clockwise
+        c key    - re-center the scan data
+        o key    - re-orientate (rotate) the scan data
+        z key    - reset the zoom level
+        i key    - re-center and re-orientate and reset the zoom (initializes the default viewer settings)
+        Esc key    - Ends the scanning session and closes the viewer
