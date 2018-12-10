@@ -220,7 +220,7 @@ If you have any extra questions, please feel free to contact us at our support e
     support AT slamtec DOT com
     
     
-## Python3 Driver and Viewer
+# Python3 Driver and Viewer
 
 RPLidar Viewer Instructions:
 
@@ -246,3 +246,29 @@ RPLidar Viewer Instructions:
         z key    - reset the zoom level
         i key    - re-center and re-orientate and reset the zoom (initializes the default viewer settings)
         Esc key    - Ends the scanning session and closes the viewer
+        
+RPLidar Class Object
+
+    Properties of Interest:
+        COM (pyserial) object - set baud rate, timeout, etc.
+        Measured rotation rate
+        Measured number of valid points
+        Viewer screen size (pygame), always square dimensions
+        Change colours of pygame objects (points, rays, background, etc.)
+   
+    Methods of Interest:
+      constructor (init) - ('port info', baud_rate, timeout, screen_size, draw_rays_at_start, DEBUG_MODE)
+	  connect()
+	  disconnect()
+	  get_device_info()
+	  get_device_health()
+	  get_sample_rate()
+	  start_standard_scan() - 4000 pulses/rec scan rate
+	  start_express_scan() - 8000 pulses/sec scan rate
+	  start_motor_slow() - slowest useable rotation rate
+	  start_motor_14() - 1/4 max rotation rate
+	  start_motor_half() - 1/2 max rotation rate
+	  start_motor_34() - 3/4 max rotation rate
+	  start_motor_max() - fastest/max rotation rate
+	  stop_scan()
+	  reset()
