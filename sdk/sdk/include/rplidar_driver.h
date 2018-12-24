@@ -301,13 +301,16 @@ public:
     /// The interface will return RESULT_OPERATION_TIMEOUT to indicate that not even a single node can be retrieved since last call. 
     DEPRECATED(virtual u_result getScanDataWithInterval(rplidar_response_measurement_node_t * nodebuffer, size_t & count)) = 0;
 
-    /// Return received scan points even if it's not complete scan
+    /// Return received scan points even if it's not complete scan.
     ///
-    /// \param nodebuffer     Buffer provided by the caller application to store the scan data
+    /// \param nodebuffer     Buffer provided by the caller application to store the scan data. This buffer must be initialized by
+    ///                       the caller.
     ///
-    /// \param count          Once the interface returns, this parameter will store the actual received data count.
+    /// \param count          The caller must initialize this parameter to set the max data count of the provided buffer (in unit of rplidar_response_measurement_node_t).
+    ///                       Once the interface returns, this parameter will store the actual received data count.
     ///
-    /// The interface will return RESULT_OPERATION_TIMEOUT to indicate that not even a single node can be retrieved since last call. 
+    /// The interface will return RESULT_OPERATION_TIMEOUT to indicate that not even a single node can be retrieved since last call.
+    /// The interface will return RESULT_REMAINING_DATA to indicate that the given buffer is full, but that there remains data to be read.
     virtual u_result getScanDataWithIntervalHq(rplidar_response_measurement_node_hq_t * nodebuffer, size_t & count) = 0;
 
     virtual ~RPlidarDriver() {}

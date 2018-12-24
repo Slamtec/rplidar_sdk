@@ -1780,19 +1780,27 @@ u_result RPlidarDriverImplCommon::getScanDataWithInterval(rplidar_response_measu
 u_result RPlidarDriverImplCommon::getScanDataWithIntervalHq(rplidar_response_measurement_node_hq_t * nodebuffer, size_t & count)
 {
     size_t size_to_copy = 0;
+    // Prevent crash in case lidar is not scanning - that way this function will leave nodebuffer untouched and set
+    // count to 0.
+    if (_isScanning)
     {
         rp::hal::AutoLocker l(_lock);
         if (_cached_scan_node_hq_count_for_interval_retrieve == 0)
         {
             return RESULT_OPERATION_TIMEOUT;
         }
-        //copy all the nodes(_cached_scan_node_count_for_interval_retrieve nodes) in _cached_scan_node_buf_for_interval_retrieve
-        size_to_copy = _cached_scan_node_hq_count_for_interval_retrieve;
+        // Copy at most count nodes from _cached_scan_node_buf_for_interval_retrieve
+        size_to_copy = min(_cached_scan_node_hq_count_for_interval_retrieve, count);
         memcpy(nodebuffer, _cached_scan_node_hq_buf_for_interval_retrieve, size_to_copy * sizeof(rplidar_response_measurement_node_hq_t));
-        _cached_scan_node_hq_count_for_interval_retrieve = 0;
+        _cached_scan_node_hq_count_for_interval_retrieve -= size_to_copy;
+        // Move remaining data to the start of the array.
+        memmove(&_cached_scan_node_hq_buf_for_interval_retrieve[0], &_cached_scan_node_hq_buf_for_interval_retrieve[size_to_copy], _cached_scan_node_hq_count_for_interval_retrieve *  sizeof(rplidar_response_measurement_node_hq_t));
     }
     count = size_to_copy;
 
+	// If there is remaining data, return with a warning.
+	if (_cached_scan_node_hq_count_for_interval_retrieve > 0)
+		return RESULT_REMAINING_DATA;
     return RESULT_OK;
 }
 
