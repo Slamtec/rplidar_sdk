@@ -1,2 +1,4 @@
 .vs
 *.sdf
+sdk/obj
+**/ipch

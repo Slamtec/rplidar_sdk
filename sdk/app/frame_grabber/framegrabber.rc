@@ -131,7 +131,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,176,73,50,14
-    LTEXT           "RPLIDAR(R) System Win32 Demo Application\n\nVersion: 1.9.0\n\nCopyright(C) 2009 - 2013 RoboPeak Team\nCopyright(C) 2013 - 2018 Shanghai Slamtec Co. Ltd.\nhttp://www.slamtec.com",IDC_STATIC,45,14,172,57
+    LTEXT           "RPLIDAR(R) System Win32 Demo Application\n\nVersion: 1.10.0\n\nCopyright(C) 2009 - 2013 RoboPeak Team\nCopyright(C) 2013 - 2019 Shanghai Slamtec Co. Ltd.\nhttp://www.slamtec.com",IDC_STATIC,45,14,172,57
     ICON            IDR_MAINFRAME,IDC_STATIC,17,15,20,20
 END
 
@@ -284,8 +284,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,9,0,0
- PRODUCTVERSION 1,9,0,0
+ FILEVERSION 1,10,0,0
+ PRODUCTVERSION 1,10,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -301,12 +301,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "framegrabber Module"
-            VALUE "FileVersion", "1.9.0.0"
+            VALUE "FileVersion", "1.10.0.0"
             VALUE "InternalName", "framegrabber"
             VALUE "LegalCopyright", "Copyright 2012"
             VALUE "OriginalFilename", "framegrabber.exe"
             VALUE "ProductName", "framegrabber Module"
-            VALUE "ProductVersion", "1.9.0.0"
+            VALUE "ProductVersion", "1.10.0.0"
         END
     END
     BLOCK "VarFileInfo"
