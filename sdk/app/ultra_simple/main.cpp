@@ -106,6 +106,8 @@ int main(int argc, const char * argv[]) {
 #ifdef _WIN32
         // use default com port
         opt_com_path = "\\\\.\\com3";
+#elif __APPLE__
+        opt_com_path = "/dev/tty.SLAB_USBtoUART";
 #else
         opt_com_path = "/dev/ttyUSB0";
 #endif

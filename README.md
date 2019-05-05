@@ -21,6 +21,7 @@ The demo applications are licensed under GPLv3 license.
 Release Notes
 -------------
 
+* [v1.11.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.10.0.md)
 * [v1.10.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.10.0.md)
 * [v1.9.1](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.9.1.md)
 * [v1.9.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.9.0.md)
@@ -36,7 +37,7 @@ RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 projec
 | ---------------------- | ------- | ----- | ------|
 | A1                     | Yes     | Yes   | Yes   |
 | A2                     | Yes     | Yes   | Yes   |
-| A3                     | Yes     | No    | Yes   |
+| A3                     | Yes     | Yes   | Yes   |
 
 Quick Start
 -----------
@@ -46,8 +47,6 @@ Quick Start
 If you have Microsoft Visual Studio 2010 installed, just open sdk/workspaces/vc10/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
 
 ### On macOS and Linux
-
-> Note: RPLIDAR A3 is not supported on macOS yet, because macOS doens't support the baudrate used by RPLIDAR A3, which is 256000
 
 Please make sure you have make and g++ installed, and then just invoke make in the root directory, you can get the compiled result at `output/$PLATFORM/$SCHEME`, such as `output/Linux/Release`.
 

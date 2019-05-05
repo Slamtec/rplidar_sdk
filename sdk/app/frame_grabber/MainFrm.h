@@ -44,7 +44,11 @@ public:
         WORKING_MODE_IDLE       = 0,
         WORKING_MODE_SCAN       = 3,
     };
-
+    enum {
+        RPLIDAR_A_SERIES_MINUM_MAJOR_ID       = 0,
+        RPLIDAR_S_SERIES_MINUM_MAJOR_ID       = 5,
+        RPLIDAR_T_SERIES_MINUM_MAJOR_ID       = 8,
+    };
 
     DECLARE_FRAME_WND_CLASS(NULL, IDR_MAINFRAME)
     CScanView         m_scanview;

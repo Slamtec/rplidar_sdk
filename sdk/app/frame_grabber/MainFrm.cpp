@@ -303,6 +303,7 @@ void    CMainFrame::onUpdateTitle()
 {
     char titleMsg[200];
     const char * workingmodeDesc;
+    char deviceDesc[10];
     switch (workingMode) {
     case WORKING_MODE_IDLE:
         workingmodeDesc = "IDLE";
@@ -314,8 +315,17 @@ void    CMainFrame::onUpdateTitle()
         assert(!"should not come here");
     }
 
-    sprintf(titleMsg, "[%s] Model: %d FW: %d.%02d HW: %d Serial: "
+    if((devInfo.model>>4)>RPLIDAR_T_SERIES_MINUM_MAJOR_ID){
+       sprintf(deviceDesc,"T%d",(devInfo.model>>4)-RPLIDAR_T_SERIES_MINUM_MAJOR_ID) ;
+    }else if((devInfo.model>>4)>RPLIDAR_S_SERIES_MINUM_MAJOR_ID){
+       sprintf(deviceDesc,"S%d",(devInfo.model>>4)-RPLIDAR_S_SERIES_MINUM_MAJOR_ID) ;
+    }else{
+       sprintf(deviceDesc,"A%d",devInfo.model>>4) ;
+    }
+    sprintf(titleMsg, "[%s] Model: %sM%d(%d) FW: %d.%02d HW: %d Serial: "
         , workingmodeDesc
+        , deviceDesc
+        , devInfo.model&0xf
         , devInfo.model
         , devInfo.firmware_version>>8
         , devInfo.firmware_version & 0xFF, devInfo.hardware_version);
@@ -343,12 +353,12 @@ void    CMainFrame::onSwitchMode(int newMode)
             // stop the previous operation
             LidarMgr::GetInstance().lidar_drv->stop();
             LidarMgr::GetInstance().lidar_drv->stopMotor();
-
             UISetCheck(ID_CMD_STOP, 1);
             UISetCheck(ID_CMD_GRAB_PEAK, 0);
             UISetCheck(ID_CMD_GRAB_FRAME, 0);
             UISetCheck(ID_CMD_SCAN, 0);
             UISetCheck(ID_CMD_GRABFRAMENONEDIFF, 0);
+            LidarMgr::GetInstance().lidar_drv->clearNetSerialRxCache();
         }
         break;
     case WORKING_MODE_SCAN:
