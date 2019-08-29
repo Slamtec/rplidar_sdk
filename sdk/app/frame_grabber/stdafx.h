@@ -76,3 +76,4 @@ using namespace WTL;
 //STL
 #include <vector>
 #include <map>
+#include <string>

@@ -90,7 +90,7 @@ int main(int argc, const char * argv[]) {
     bool useArgcBaudrate = false;
 
     printf("Ultra simple LIDAR data grabber for RPLIDAR.\n"
-           "Version: "RPLIDAR_SDK_VERSION"\n");
+           "Version: " RPLIDAR_SDK_VERSION "\n");
 
     // read serial port from the command line...
     if (argc>1) opt_com_path = argv[1]; // or set to a fixed value: e.g. "com3" 
