@@ -132,7 +132,6 @@ u_result RPlidarDriverImplCommon::reset(_u32 timeout)
     return RESULT_OK;
 }
 
-
 u_result RPlidarDriverImplCommon::clearNetSerialRxCache()
 {
     if (!isConnected()) return RESULT_OPERATION_FAIL;
@@ -264,7 +263,18 @@ u_result RPlidarDriverImplCommon::getDeviceInfo(rplidar_response_device_info_t &
             return RESULT_OPERATION_TIMEOUT;
         }
         _chanDev->recvdata(reinterpret_cast<_u8 *>(&info), sizeof(info));
+        if ((info.model >> 4) > RPLIDAR_TOF_MINUM_MAJOR_ID){
+            _isTofLidar = true;
+        }else {
+            _isTofLidar = false;
+        }
     }
+    return RESULT_OK;
+}
+
+u_result RPlidarDriverImplCommon::checkIfTofLidar(bool & isTofLidar, _u32 timeout)
+{
+    isTofLidar = _isTofLidar;
     return RESULT_OK;
 }
 
@@ -1773,7 +1783,6 @@ u_result RPlidarDriverImplCommon::stop(_u32 timeout)
             return ans;
         }
     }
-
     return RESULT_OK;
 }
 
@@ -2133,6 +2142,7 @@ u_result RPlidarDriverImplCommon::checkMotorCtrlSupport(bool & support, _u32 tim
 
 u_result RPlidarDriverImplCommon::setMotorPWM(_u16 pwm)
 {
+    if (_isTofLidar) return RESULT_OPERATION_NOT_SUPPORT;
     u_result ans;
     rplidar_payload_motor_pwm_t motor_pwm;
     motor_pwm.pwm_value = pwm;
@@ -2148,22 +2158,43 @@ u_result RPlidarDriverImplCommon::setMotorPWM(_u16 pwm)
     return RESULT_OK;
 }
 
+u_result RPlidarDriverImplCommon::setLidarSpinSpeed(_u16 rpm, _u32 timeout)
+{
+    if (!_isTofLidar) return RESULT_OPERATION_NOT_SUPPORT;
+
+    u_result ans;
+    rplidar_payload_hq_spd_ctrl_t speedReq;
+    speedReq.rpm = rpm;
+    if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_HQ_MOTOR_SPEED_CTRL, (const _u8 *)&speedReq, sizeof(speedReq)))) {
+        return ans;
+    }
+    return RESULT_OK;
+}
+
 u_result RPlidarDriverImplCommon::startMotor()
 {
-    if (_isSupportingMotorCtrl) { // RPLIDAR A2
-        setMotorPWM(DEFAULT_MOTOR_PWM);
-        delay(500);
-        return RESULT_OK;
-    } else { // RPLIDAR A1
-        rp::hal::AutoLocker l(_lock);
-        _chanDev->clearDTR();
-        delay(500);
-        return RESULT_OK;
+    if (!_isTofLidar) {
+        if (_isSupportingMotorCtrl) { // RPLIDAR A2
+            setMotorPWM(DEFAULT_MOTOR_PWM);
+            delay(500);
+            return RESULT_OK;
+        }
+        else { // RPLIDAR A1
+            rp::hal::AutoLocker l(_lock);
+            _chanDev->clearDTR();
+            delay(500);
+            return RESULT_OK;
+        }
     }
+    else {
+        setLidarSpinSpeed(600);//set default rpm to tof lidar
+    }
+
 }
 
 u_result RPlidarDriverImplCommon::stopMotor()
 {
+    if(_isTofLidar) return RESULT_OK;
     if (_isSupportingMotorCtrl) { // RPLIDAR A2
         setMotorPWM(0);
         delay(500);

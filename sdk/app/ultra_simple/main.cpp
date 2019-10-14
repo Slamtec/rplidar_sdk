@@ -201,19 +201,19 @@ int main(int argc, const char * argv[]) {
 
     // fetech result and print it out...
     while (1) {
-        rplidar_response_measurement_node_t nodes[8192];
+        rplidar_response_measurement_node_hq_t nodes[8192];
         size_t   count = _countof(nodes);
 
-        op_result = drv->grabScanData(nodes, count);
+        op_result = drv->grabScanDataHq(nodes, count);
 
         if (IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
             for (int pos = 0; pos < (int)count ; ++pos) {
                 printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
-                    (nodes[pos].sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
-                    (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
-                    nodes[pos].distance_q2/4.0f,
-                    nodes[pos].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+                    (nodes[pos].flag & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
+                    (nodes[pos].angle_z_q14 * 90.f / (1 << 14)), 
+                    nodes[pos].dist_mm_q2/4.0f,
+                    nodes[pos].quality);
             }
         }
 
