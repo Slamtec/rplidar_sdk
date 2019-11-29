@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 #include "rplidar.h" //RPLIDAR standard sdk, all-in-one header
-
+#include "time.h"
 #ifndef _countof
 #define _countof(_Array) (int)(sizeof(_Array) / sizeof(_Array[0]))
 #endif
@@ -105,7 +105,7 @@ int main(int argc, const char * argv[]) {
     if (!opt_com_path) {
 #ifdef _WIN32
         // use default com port
-        opt_com_path = "\\\\.\\com3";
+        opt_com_path = "\\\\.\\com57";
 #elif __APPLE__
         opt_com_path = "/dev/tty.SLAB_USBtoUART";
 #else
@@ -205,15 +205,16 @@ int main(int argc, const char * argv[]) {
         size_t   count = _countof(nodes);
 
         op_result = drv->grabScanDataHq(nodes, count);
-
+        if (count > 1500)
+            printf("time:%u secs. cnt:%d/n", clock() / CLOCKS_PER_SEC,count);
         if (IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
             for (int pos = 0; pos < (int)count ; ++pos) {
-                printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
-                    (nodes[pos].flag & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
-                    (nodes[pos].angle_z_q14 * 90.f / (1 << 14)), 
-                    nodes[pos].dist_mm_q2/4.0f,
-                    nodes[pos].quality);
+                //printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
+                //    (nodes[pos].flag & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
+                //    (nodes[pos].angle_z_q14 * 90.f / (1 << 14)), 
+                //    nodes[pos].dist_mm_q2/4.0f,
+                //    nodes[pos].quality);
             }
         }
 
