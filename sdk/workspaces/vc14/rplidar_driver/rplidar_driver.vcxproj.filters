@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="sdk">
+      <UniqueIdentifier>{5cb78334-d13c-41d7-9eb5-41cee2d01e72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdk\include">
+      <UniqueIdentifier>{f9173f07-ff74-4d5d-b1dc-164d0038c1bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdk\src">
+      <UniqueIdentifier>{27dac87b-034a-4a59-bc55-ea80634c118e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdk\src\arch">
+      <UniqueIdentifier>{53230295-1fab-4e93-8aa0-2639de2def2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdk\src\arch\win32">
+      <UniqueIdentifier>{7f726b48-4843-47e1-b28b-4d995dfa7137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdk\src\hal">
+      <UniqueIdentifier>{86396fa7-a00c-44f8-bf55-caa5296c66c0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\sdk\include\rplidar.h">
+      <Filter>sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\include\rplidar_cmd.h">
+      <Filter>sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\include\rplidar_protocol.h">
+      <Filter>sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\include\rplidar_driver.h">
+      <Filter>sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\arch\win32\net_serial.h">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\abs_rxtx.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\arch\win32\arch_win32.h">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\util.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\sdkcommon.h">
+      <Filter>sdk\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_serial.h">
+      <Filter>sdk\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\arch\win32\timer.h">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\arch\win32\winthread.hpp">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\locker.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\thread.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\include\rptypes.h">
+      <Filter>sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\event.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\assert.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\byteops.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\socket.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\hal\types.h">
+      <Filter>sdk\src\hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_TCP.h">
+      <Filter>sdk\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_impl.h">
+      <Filter>sdk\src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\sdk\src\arch\win32\net_serial.cpp">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdk\src\rplidar_driver.cpp">
+      <Filter>sdk\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdk\src\arch\win32\timer.cpp">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdk\src\hal\thread.cpp">
+      <Filter>sdk\src\hal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\sdk\src\arch\win32\net_socket.cpp">
+      <Filter>sdk\src\arch\win32</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
