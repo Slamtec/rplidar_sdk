@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Chinese (Simplified, PRC) resources
+// 中文(简体，中国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
@@ -62,6 +62,41 @@ BEGIN
     EDITTEXT        IDC_EDIT_PORT,166,19,70,14,ES_AUTOHSCROLL
 END
 
+IDD_DLG_CHOOSE_CONNECTION DIALOGEX 0, 0, 341, 186
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "CHOOSE CONNECTION"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,183,165,50,14
+    PUSHBUTTON      "CANCEL",IDCANCEL,267,165,50,14
+    GROUPBOX        "CONNECTION MODE",IDC_STATIC,7,15,327,143
+    LTEXT           "Please select the Serial Port and Baudrate",IDC_STATIC,42,43,184,12
+    LTEXT           "Please  input IP and Port, and select Protocol",IDC_STATIC,42,100,184,12
+    CONTROL         "Serial Port",IDC_RADIO_VIA_SERIAL_PORT,"Button",BS_AUTORADIOBUTTON,27,28,49,10
+    CONTROL         "Network",IDC_RADIO_VIA_NETWORK,"Button",BS_AUTORADIOBUTTON,27,89,43,10
+    COMBOBOX        IDC_COMBO_SERIAL_PORT,27,58,184,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_SERIAL_BAUD,224,58,98,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_IPADDRESS,"SysIPAddress32",WS_TABSTOP,27,115,118,14
+    EDITTEXT        IDC_IP_PORT,169,115,60,14,ES_AUTOHSCROLL
+    COMBOBOX        IDC_COMBO_NETWORK_PROTOCOL,246,116,71,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Auto-Discovery",IDC_BUTTON_AUTO_DISCOVERY,246,139,71,14
+END
+
+IDD_DLG_AUTO_DISCOVERY DIALOGEX 0, 0, 309, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Auto Discovery"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "确定",IDOK,198,155,50,14
+    PUSHBUTTON      "取消",IDCANCEL,252,155,50,14
+    GROUPBOX        "Device",IDC_STATIC,14,16,281,46
+    LTEXT           "IP",IDC_STATIC,43,33,8,8
+    LTEXT           "PORT",IDC_STATIC,185,33,19,8
+    LISTBOX         IDC_LIST_IP,14,65,281,79,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_IPADDRESS_SEL,"SysIPAddress32",WS_TABSTOP,56,30,110,15
+    EDITTEXT        IDC_EDIT_IP_PORT,208,30,51,14,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -95,6 +130,34 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 71
     END
+
+    IDD_DLG_CHOOSE_CONNECTION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 334
+        VERTGUIDE, 27
+        VERTGUIDE, 42
+        VERTGUIDE, 211
+        VERTGUIDE, 224
+        VERTGUIDE, 246
+        VERTGUIDE, 317
+        VERTGUIDE, 324
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 179
+        HORZGUIDE, 71
+        HORZGUIDE, 139
+    END
+
+    IDD_DLG_AUTO_DISCOVERY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        VERTGUIDE, 43
+        VERTGUIDE, 207
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 169
+        HORZGUIDE, 41
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -109,12 +172,22 @@ BEGIN
     0
 END
 
-#endif    // Chinese (Simplified, PRC) resources
+IDD_DLG_CHOOSE_CONNECTION AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DLG_AUTO_DISCOVERY AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (United States) resources
+// 英语(美国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -153,6 +226,17 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 
 #ifdef APSTUDIO_INVOKED
@@ -318,17 +402,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_ABOUTBOX AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // String Table
 //
 
@@ -434,7 +507,7 @@ BEGIN
     ID_CMD_SCAN             "Start Scan\nStart Scan"
 END
 
-#endif    // English (United States) resources
+#endif    // 英语(美国) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

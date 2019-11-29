@@ -35,6 +35,7 @@
 #include "MainFrm.h"
 #include "SerialSelDlg.h"
 #include "TcpChannelSelDlg.h"
+#include "ChooseConnectionDlg.h"
 #include "drvlogic\lidarmgr.h"
 
 CAppModule _Module;
@@ -45,7 +46,36 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
     _Module.AddMessageLoop(&theLoop);
 
     CMainFrame wndMain;
-    CSerialSelDlg serialsel;
+    CChooseConnectionDlg chooseConnection;
+
+    if (chooseConnection.DoModal() == IDCANCEL) return 0;
+    CChooseConnectionDlg::_connection_type_info connection_info= chooseConnection.getSelectedConnectionTypeInfo();
+
+    if (!connection_info.serial.usingNetwork)
+    {
+        if (!LidarMgr::GetInstance().onConnect(connection_info.serial.serialPath, connection_info.serial.baud)) {
+            MessageBox(NULL, "Cannot bind to the specified port.", "Error", MB_OK);
+            return -1;
+        }
+    }
+    else 
+    {
+        if (connection_info.network.protocol == "UDP")
+        {
+
+        }
+        else
+        {
+            TCPChannelSelDlg tcp_channel;
+            if (!LidarMgr::GetInstance().onConnectTcp(connection_info.network.ip, connection_info.network.port)) {
+                MessageBox(NULL, "Cannot bind to the tcp server.", "Error", MB_OK);
+                return false;
+            }
+        }
+    
+    }
+
+    /*CSerialSelDlg serialsel;
 
     if (serialsel.DoModal() == IDCANCEL) return 0;
 
@@ -71,7 +101,7 @@ int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 			MessageBox(NULL, "Cannot bind to the specified port.", "Error", MB_OK);
 			return -1;
 		}
-	}
+	}*/
 
     if(wndMain.CreateEx() == NULL)
     {

@@ -1,12 +1,14 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by framegrabber.rc
+// Microsoft Visual C++ 生成的包含文件。
+// 供 framegrabber.rc 使用
 //
 #define IDD_ABOUTBOX                    100
 #define IDR_MAINFRAME                   128
 #define IDD_DLG_SERIAL_SEL              201
 #define IDD_DLG_SETFREQ                 203
 #define IDD_DIG_TCP_SEL                 204
+#define IDD_DLG_CHOOSE_CONNECTION       205
+#define IDD_DLG_AUTO_DISCOVERY          207
 #define IDC_COMB_SERIAL_SEL             1000
 #define IDC_EDIT1                       1020
 #define IDC_EDIT_IP                     1020
@@ -18,6 +20,18 @@
 #define IDC_BUTTON_TCPSERVER            1027
 #define IDC_COMB_BAUDRATE               1028
 #define IDC_EDIT_PORT                   1029
+#define IDC_RADIO_VIA_SERIAL_PORT       1030
+#define IDC_RADIO_VIA_NETWORK           1031
+#define IDC_COMBO_SERIAL_PORT           1032
+#define IDC_COMBO_SERIAL_BAUD           1033
+#define IDC_IPADDRESS                   1034
+#define IDC_IP_PORT                     1035
+#define IDC_COMBO_NETWORK_PROTOCOL      1036
+#define IDC_BUTTON_AUTO_DISCOVERY       1037
+#define IDC_LIST1                       1038
+#define IDC_LIST_IP                     1038
+#define IDC_IPADDRESS_SEL               1039
+#define IDC_EDIT_IP_PORT                1041
 #define ID_CMD_GRAB_FRAME               32776
 #define ID_CMD_SCAN                     32780
 #define ID_CMD_GRAB_PEAK                32781
@@ -42,9 +56,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        205
+#define _APS_NEXT_RESOURCE_VALUE        209
 #define _APS_NEXT_COMMAND_VALUE         32801
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1042
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
