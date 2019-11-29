@@ -90,7 +90,7 @@ int main(int argc, const char * argv[]) {
     bool useArgcBaudrate = false;
 
     printf("Ultra simple LIDAR data grabber for RPLIDAR.\n"
-           "Version: "RPLIDAR_SDK_VERSION"\n");
+           "Version: " RPLIDAR_SDK_VERSION "\n");
 
     // read serial port from the command line...
     if (argc>1) opt_com_path = argv[1]; // or set to a fixed value: e.g. "com3" 
@@ -105,7 +105,7 @@ int main(int argc, const char * argv[]) {
     if (!opt_com_path) {
 #ifdef _WIN32
         // use default com port
-        opt_com_path = "\\\\.\\com3";
+        opt_com_path = "\\\\.\\com57";
 #elif __APPLE__
         opt_com_path = "/dev/tty.SLAB_USBtoUART";
 #else
@@ -205,7 +205,6 @@ int main(int argc, const char * argv[]) {
         size_t   count = _countof(nodes);
 
         op_result = drv->grabScanDataHq(nodes, count);
-
         if (IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
             for (int pos = 0; pos < (int)count ; ++pos) {

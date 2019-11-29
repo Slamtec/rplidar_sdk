@@ -54,7 +54,7 @@ using namespace rp::standalone::rplidar;
 void print_usage(int argc, const char * argv[])
 {
     printf("Simple LIDAR data grabber for RPLIDAR.\n"
-           "Version: "RPLIDAR_SDK_VERSION"\n"
+           "Version: " RPLIDAR_SDK_VERSION "\n"
            "Usage:\n"
            "%s <com port> [baudrate]\n"
            "The default baudrate is 115200(for A2) or 256000(for A3). Please refer to the datasheet for details.\n"
