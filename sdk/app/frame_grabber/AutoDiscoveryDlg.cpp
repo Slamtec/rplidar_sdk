@@ -33,28 +33,19 @@
 #include <errno.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "dns_sd.h"
 #include "AutoDiscoveryDlg.h"
 
-using namespace std;
 
-DNSServiceRef client = NULL;
-DNSServiceRef sc1;
 
 #define LONG_TIME   10
-static volatile int stopNow = 0;
-static volatile int timeOut = LONG_TIME;
-struct timeval tv;
-typedef struct dev_info_t {
-    char txtbuffer[200];
-}dev_info;
-dev_info dev_info_instance[40];
-dev_info* dev_p;
-int deviceNum = 0;
-std::vector<std::pair<string, int> > info_list;
-std::vector<string> host_list;
+static DNSServiceRef client = NULL;
+static struct timeval _DnsServiceTv;
+static dev_info* dev_p;
+static int _deviceNum = 0;
+static std::vector<std::pair<std::string, int> > info_list;
+static bool _dialog_alive = false;
 
-static void generateListItemTxt(int num, const char* hostname, int port, char* buffer, size_t buffersize)
+void CAutoDiscoveryDlg::generateListItemTxt(const int num, const char* hostname, int port, char* buffer, size_t buffersize)
 {
     sprintf_s(buffer, buffersize, "%d  %s  %d "
         , num
@@ -62,7 +53,7 @@ static void generateListItemTxt(int num, const char* hostname, int port, char* b
         , port);
 }
 
-static int CopyLabels(char* dst, const char* lim, const char** srcp, int labels)
+int CAutoDiscoveryDlg::copyLabels(char* dst, const char* lim, const char** srcp, int labels)
 {
     const char* src = *srcp;
     while (*src != '.' || --labels > 0)
@@ -89,7 +80,7 @@ static char* get_ip(const char* const name)
     return ip_char;
 }
 
-static void DNSSD_API zonedata_resolve(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
+void DNSSD_API CAutoDiscoveryDlg::zonedata_resolve(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
     const char* fullname, const char* hosttarget, uint16_t opaqueport, uint16_t txtLen, const unsigned char* txt, void* context)
 {
     union { uint16_t s; u_char b[2]; } port = { opaqueport };
@@ -99,22 +90,22 @@ static void DNSSD_API zonedata_resolve(DNSServiceRef sdref, const DNSServiceFlag
     char n[kDNSServiceMaxDomainName];
     char t[kDNSServiceMaxDomainName];
     char* m_ipaddr;
-    string ip_str;
+    std::string ip_str;
     if (errorCode)
         return;
 
-    if (CopyLabels(n, n + kDNSServiceMaxDomainName, &p, 3)) return;
+    if (copyLabels(n, n + kDNSServiceMaxDomainName, &p, 3)) return;
     p = fullname;
-    if (CopyLabels(t, t + kDNSServiceMaxDomainName, &p, 1)) return;
-    if (CopyLabels(t, t + kDNSServiceMaxDomainName, &p, 2)) return;
+    if (copyLabels(t, t + kDNSServiceMaxDomainName, &p, 1)) return;
+    if (copyLabels(t, t + kDNSServiceMaxDomainName, &p, 2)) return;
 
-    generateListItemTxt(deviceNum, n, PortAsNumber, dev_p->txtbuffer, _countof(dev_p->txtbuffer));
-    std::pair<string, int> current;
+    generateListItemTxt(_deviceNum, n, PortAsNumber, dev_p->txtbuffer, _countof(dev_p->txtbuffer));
+    std::pair<std::string, int> current;
     current.first = hosttarget;
     current.second = PortAsNumber;
     info_list.push_back(current);
     dev_p++;
-    deviceNum++;
+    _deviceNum++;
 
     DNSServiceRefDeallocate(sdref);
     free(context);
@@ -122,13 +113,13 @@ static void DNSSD_API zonedata_resolve(DNSServiceRef sdref, const DNSServiceFlag
     if (!(flags & kDNSServiceFlagsMoreComing))
     {
         fflush(stdout);
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        _DnsServiceTv.tv_sec = 1;
+        _DnsServiceTv.tv_usec = 0;
     }
 
 }
 
-static void DNSSD_API zonedata_browse(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
+void DNSSD_API CAutoDiscoveryDlg::zonedata_browse(DNSServiceRef sdref, const DNSServiceFlags flags, uint32_t ifIndex, DNSServiceErrorType errorCode,
     const char* replyName, const char* replyType, const char* replyDomain, void* context)
 {
     DNSServiceRef* newref;
@@ -143,7 +134,7 @@ static void DNSSD_API zonedata_browse(DNSServiceRef sdref, const DNSServiceFlags
     DNSServiceResolve(newref, kDNSServiceFlagsShareConnection, ifIndex, replyName, replyType, replyDomain, zonedata_resolve, newref);
 }
 
-static void HandleEvents(void)
+void CAutoDiscoveryDlg::HandleEvents(dev_info *dev_info_instance)
 {
     int dns_sd_fd = DNSServiceRefSockFD(client);
     int nfds = dns_sd_fd + 1;
@@ -151,11 +142,15 @@ static void HandleEvents(void)
 
     int result;
     dev_p = dev_info_instance;
-    while (!stopNow)
+
+    while (1)
     {
+#ifdef AUTO_DISCOVERY_DLG
+        if (!_dialog_alive) break;
+#endif
         FD_ZERO(&readfds);
         if (client) FD_SET(dns_sd_fd, &readfds);
-        result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &tv);
+        result = select(nfds, &readfds, (fd_set*)NULL, (fd_set*)NULL, &_DnsServiceTv);
         if (result > 0)
         {
             DNSServiceErrorType err = kDNSServiceErr_NoError;
@@ -163,30 +158,33 @@ static void HandleEvents(void)
                 err = DNSServiceProcessResult(client);
             if (err)
             {
-                stopNow = 1;
+                break;
             }
         }
         else if (result == 0)
         {
-            stopNow = 1;
+            break;
         }
         else
         {
             if (errno != EINTR)
-                stopNow = 1;
+                break;
         }
     }
 }
 
 CAutoDiscoveryDlg::CAutoDiscoveryDlg()
+    :portSel(-1)
 {
+    for (int pos = 0; pos < sizeof(ipSel) / sizeof(unsigned char); pos++)
+        ipSel[pos] = 0;
 }
 CAutoDiscoveryDlg::~CAutoDiscoveryDlg()
 {
     if (client)
     {
         DNSServiceRefDeallocate(client);
-        client = 0;
+        client = NULL;
     }
 
 }
@@ -197,26 +195,41 @@ CAutoDiscoveryDlg::CAutoDiscoveryDlg(CString ip,CString port)
     m_edit_IpPort.SetWindowTextA(port);
 }
 
+u_result CAutoDiscoveryDlg::_testingThrdInit(void)
+{
+    _deviceNum = 0;
+    info_list.clear();
+    _dialog_alive = true;
+    _thrdWorker = CLASS_THREAD(CAutoDiscoveryDlg, _testingThrd);
+    return  TRUE;
+}
+
 u_result CAutoDiscoveryDlg::_testingThrd(void)
 {
     DNSServiceErrorType err;
-    char* typ, * dom;
+    DNSServiceRef sc1;
+    char type[256], * dom;
 
     dom = "";
-    typ = "_lidar._udp";
-    tv.tv_sec = timeOut;
-    tv.tv_usec = 0;
+    m_edit_dev_type.GetWindowTextA(type, sizeof(type));
+    //typ = "_lidar._udp";
+    _DnsServiceTv.tv_sec = LONG_TIME;
+    _DnsServiceTv.tv_usec = 0;
 
     err = DNSServiceCreateConnection(&client);
     sc1 = client;
-    err = DNSServiceBrowse(&sc1, kDNSServiceFlagsShareConnection, kDNSServiceInterfaceIndexAny, typ, dom, zonedata_browse, NULL);
+    err = DNSServiceBrowse(&sc1, kDNSServiceFlagsShareConnection, kDNSServiceInterfaceIndexAny, type, dom, zonedata_browse, NULL);
 
     if (!client || err != kDNSServiceErr_NoError)
     {
         return false;
     }
 
-    HandleEvents();
+    HandleEvents(_dev_info_instance);
+
+#ifdef AUTO_DISCOVERY_DLG
+    if (!_dialog_alive) return TRUE;
+#endif
 
     if (client)
     {
@@ -225,7 +238,7 @@ u_result CAutoDiscoveryDlg::_testingThrd(void)
     }
     if (!info_list.size())
     {
-        m_list_ip.AddString("未发现指定类型设备");
+        m_list_ip.AddString("The specified device was not found!");
         return false;
     }
 
@@ -237,30 +250,86 @@ u_result CAutoDiscoveryDlg::_testingThrd(void)
         info_list[i].first = m_ipaddr;
     }
 
-    for (int i = 0; i < deviceNum; ++i)
+    for (int i = 0; i < _deviceNum; ++i)
     {
-        m_list_ip.AddString(dev_info_instance[i].txtbuffer);
+        m_list_ip.AddString(_dev_info_instance[i].txtbuffer);
     }
+    return TRUE;
 }
 
 LRESULT CAutoDiscoveryDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
     CenterWindow(GetParent());
     this->DoDataExchange();
-    rp::hal::Thread  _thrdWorker;
-    _thrdWorker = CLASS_THREAD(CAutoDiscoveryDlg, _testingThrd);
+    _testingThrdInit();
+    m_edit_dev_type.SetWindowTextA("_lidar._udp");
     return TRUE;
 }
 
 LRESULT CAutoDiscoveryDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+    _thrdWorker.terminate();
+    
+    if (client)
+    {
+        DNSServiceRefDeallocate(client);
+        client = NULL;
+    }
+    _dialog_alive = false;
     EndDialog(IDOK);
     return 0;
 }
 
 LRESULT CAutoDiscoveryDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+    _thrdWorker.terminate();
+    if (client)
+    {
+        DNSServiceRefDeallocate(client);
+        client = NULL;
+    }
+    _dialog_alive = false;
     EndDialog(IDCANCEL);
     return 0;
 }
 
+LRESULT CAutoDiscoveryDlg::OnRefresh(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    _thrdWorker.terminate();
+    int size = m_list_ip.GetCount();
+    if (size)
+    {   
+        size--;
+        m_list_ip.DeleteString(size);
+    }
+    _testingThrdInit();
+   
+    return 0;
+}
+
+LRESULT CAutoDiscoveryDlg::OnDoubleIpList(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    char buffer[128];
+    int currentSel = m_list_ip.GetCurSel();
+    if (currentSel < 0) return 0;
+
+    sprintf(buffer, "%s", info_list[currentSel].first.c_str());
+    m_IpAdress.SetWindowTextA(buffer);
+    sprintf(buffer, "%d", info_list[currentSel].second);
+    m_edit_IpPort.SetWindowTextA(buffer);
+    m_IpAdress.GetAddress((LPDWORD)ipSel);
+    m_edit_IpPort.GetWindowTextA(buffer, sizeof(buffer));
+    portSel = atoi(buffer);
+    _DnsServiceTv.tv_sec = 1;
+    m_edit_dev_type.GetWindowTextA(buffer,sizeof(buffer));
+    std::string dev_type(buffer);
+    if (dev_type.find("udp") == -1)
+    {
+        protocol = "TCP";
+    }
+    else
+    {
+        protocol = "UDP";
+    }
+    return 0;
+}

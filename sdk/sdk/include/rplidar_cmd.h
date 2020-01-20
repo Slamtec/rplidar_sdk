@@ -99,6 +99,11 @@ typedef struct _rplidar_payload_get_scan_conf_t {
     _u32  type;
     _u8   reserved[32];
 } __attribute__((packed)) rplidar_payload_get_scan_conf_t;
+
+typedef struct _rplidar_payload_set_scan_conf_t {
+    _u32  type;
+} __attribute__((packed)) rplidar_payload_set_scan_conf_t;
+
 #define MAX_MOTOR_PWM               1023
 #define DEFAULT_MOTOR_PWM           660
 typedef struct _rplidar_payload_motor_pwm_t {
@@ -227,7 +232,7 @@ typedef struct rplidar_response_measurement_node_hq_t {
 typedef struct _rplidar_response_hq_capsule_measurement_nodes_t{
     _u8 sync_byte;
     _u64 time_stamp;
-    rplidar_response_measurement_node_hq_t node_hq[16];
+    rplidar_response_measurement_node_hq_t node_hq[96];
     _u32  crc32;
 }__attribute__((packed)) rplidar_response_hq_capsule_measurement_nodes_t;
 
@@ -250,8 +255,14 @@ typedef struct _rplidar_response_hq_capsule_measurement_nodes_t{
 #define RPLIDAR_CONF_SCAN_MODE_US_PER_SAMPLE        0x00000071
 #define RPLIDAR_CONF_SCAN_MODE_MAX_DISTANCE         0x00000074
 #define RPLIDAR_CONF_SCAN_MODE_ANS_TYPE             0x00000075
+#define RPLIDAR_CONF_LIDAR_DEVICE_LEVEL             0x00000078
+#define RPLIDAR_CONF_LIDAR_MAC_ADDR                 0x00000079
 #define RPLIDAR_CONF_SCAN_MODE_TYPICAL              0x0000007C
 #define RPLIDAR_CONF_SCAN_MODE_NAME                 0x0000007F
+
+#define RPLIDAR_CONF_LIDAR_STATIC_IP_ADDR           0x0001CCC0
+#define RPLIDAR_CONF_SCAN_MODE_DETECTTYPE           0x0001CCC1
+
 #define RPLIDAR_EXPRESS_SCAN_STABILITY_BITMAP                 4
 #define RPLIDAR_EXPRESS_SCAN_SENSITIVITY_BITMAP               5
 
@@ -264,7 +275,6 @@ typedef struct _rplidar_response_set_lidar_conf{
     _u32 result;
 }__attribute__((packed)) rplidar_response_set_lidar_conf_t;
 
-
 typedef struct _rplidar_response_device_info_t {
     _u8   model;
     _u16  firmware_version;
@@ -272,10 +282,31 @@ typedef struct _rplidar_response_device_info_t {
     _u8   serialnum[16];
 } __attribute__((packed)) rplidar_response_device_info_t;
 
+typedef struct _rplidar_response_device_macaddr_info_t {
+    _u8   macaddr[6];
+} __attribute__((packed)) rplidar_response_device_macaddr_info_t;
+
 typedef struct _rplidar_response_device_health_t {
     _u8   status;
     _u16  error_code;
 } __attribute__((packed)) rplidar_response_device_health_t;
+
+typedef struct _rplidar_ip_conf_t {
+    _u8 ip_addr[4];
+    _u8 net_mask[4];
+    _u8 gw[4];
+}__attribute__((packed)) rplidar_ip_conf_t;
+
+enum rplidar_detect_mode_t {
+    RPLIDAR_DETECT_MODE_ANTI = 0,
+    RPLIDAR_DETECT_MODE_ENHANCE = 1,
+    RPLIDAR_DETECT_MODE_COUNT = RPLIDAR_DETECT_MODE_ENHANCE + 1,
+} ;  // only for T1 now
+
+typedef struct _rplidar_device_detect_mode {
+    _u8 detect_mode_type;
+} __attribute__((packed)) rplidar_device_detect_mode_t;
+
 
 // Definition of the variable bit scale encoding mechanism
 #define RPLIDAR_VARBITSCALE_X2_SRC_BIT  9

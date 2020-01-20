@@ -37,6 +37,7 @@ public:
     ~LidarMgr();
     bool onConnect(const char * port, int baudrate);
     bool onConnectTcp(const char * ipStr, _u32 port, _u32 flag = 0);
+    bool onConnectUdp(const char* ipStr, _u32 port, _u32 flag = 0);
     bool isConnected() const { return _isConnected; }
     void onDisconnect();
     bool checkDeviceHealth(int * errorCode = NULL);

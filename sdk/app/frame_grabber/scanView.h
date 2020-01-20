@@ -40,7 +40,6 @@ class CScanView : public CWindowImpl<CScanView>
 {
 public:
     DECLARE_WND_CLASS(NULL)
-
     
     BOOL PreTranslateMessage(MSG* pMsg);
 
@@ -63,6 +62,7 @@ public:
 
     void onDrawSelf(CDCHandle dc);
     void setScanData(rplidar_response_measurement_node_hq_t *buffer, size_t count, float sampleDuration);
+    void setDetectMode(int mode);
     void stopScan();
     CScanView();
 
@@ -83,4 +83,5 @@ protected:
     int                  _sample_counter;
     _u64                 _last_update_ts;
     bool                 _is_scanning;
+    int                  _detect_mode;
 };

@@ -703,7 +703,7 @@ public:
         tv.tv_sec = timeout / 1000;
         tv.tv_usec = (timeout % 1000) * 1000;
         int ans = ::select(_socket_fd+1, &rdset, NULL, NULL, &tv);
-
+        
         switch (ans) {
             case 1:
                 // fired
@@ -717,11 +717,23 @@ public:
         }
     }
 
+    virtual u_result setPairAddress(const SocketAddress * pairAddress)
+    {
+        sockaddr_storage unspecAddr;
+        unspecAddr.ss_family = AF_UNSPEC;
+
+        const struct sockaddr * addr = pairAddress ? reinterpret_cast<const struct sockaddr *>(pairAddress->getPlatformData()) : reinterpret_cast<const struct sockaddr *>(&unspecAddr);
+        int ans = ::connect(_socket_fd, addr, (int)sizeof(sockaddr_storage));
+        return ans ? RESULT_OPERATION_FAIL : RESULT_OK;
+
+    }
+
     virtual u_result sendTo(const SocketAddress & target, const void * buffer, size_t len)
     {
-        const struct sockaddr * addr = reinterpret_cast<const struct sockaddr *>(target.getPlatformData());
-        assert(addr);
-        size_t ans = ::sendto( _socket_fd, buffer, len, 0, addr, sizeof(sockaddr_storage));
+        const struct sockaddr * addr = &target ? reinterpret_cast<const struct sockaddr *>(target.getPlatformData()) : NULL;
+        //assert(addr);
+        int dest_addr_size = (&target ? sizeof(sockaddr_storage) : 0);
+        int ans = ::sendto(_socket_fd, (const char *)buffer, (int)len, 0, addr, dest_addr_size);
         if (ans != (size_t)-1) {
             assert(ans == (int)len);
             return RESULT_OK;

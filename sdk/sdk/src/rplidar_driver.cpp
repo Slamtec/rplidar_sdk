@@ -44,7 +44,7 @@
 #include "rplidar_driver_impl.h"
 #include "rplidar_driver_serial.h"
 #include "rplidar_driver_TCP.h"
-
+#include "rplidar_driver_UDP.h"
 #include <algorithm>
 
 #ifndef min
@@ -89,6 +89,8 @@ RPlidarDriver * RPlidarDriver::CreateDriver(_u32 drivertype)
         return new RPlidarDriverSerial();
     case DRIVER_TYPE_TCP:
          return new RPlidarDriverTCP();
+    case DRIVER_TYPE_UDP:
+        return new RPlidarDriverUDP();
     default:
         return NULL;
     }
@@ -187,8 +189,6 @@ u_result RPlidarDriverImplCommon::_waitResponseHeader(rplidar_ans_header_t * hea
     return RESULT_OPERATION_TIMEOUT;
 }
 
-
-
 u_result RPlidarDriverImplCommon::getHealth(rplidar_response_device_health_t & healthinfo, _u32 timeout)
 {
     u_result  ans;
@@ -227,7 +227,47 @@ u_result RPlidarDriverImplCommon::getHealth(rplidar_response_device_health_t & h
     return RESULT_OK;
 }
 
+u_result RPlidarDriverImplCommon::getDeviceMacAddr(_u8* macAddrArray, _u32 timeoutInMs)
+{
+    u_result ans;
 
+    std::vector<_u8> answer(6, 0);
+    ans = getLidarConf(RPLIDAR_CONF_LIDAR_MAC_ADDR, answer, std::vector<_u8>(), timeoutInMs);
+    if (IS_FAIL(ans))
+    {
+        return ans;
+    }
+    int len = answer.size();
+    if (0 == len) return RESULT_INVALID_DATA;
+    memcpy(macAddrArray, &answer[0], len);
+    return ans;
+}
+
+u_result RPlidarDriverImplCommon::setLidarDetectMode(rplidar_device_detect_mode_t mode, _u32 timeoutInMs)
+{
+    u_result ans = setLidarConf(RPLIDAR_CONF_SCAN_MODE_DETECTTYPE, &mode, sizeof(rplidar_device_detect_mode_t), timeoutInMs);
+
+    return ans;
+}
+
+u_result RPlidarDriverImplCommon::getLidarDetectMode(rplidar_device_detect_mode_t& mode, _u32 timeoutInMs)
+{
+    u_result ans;
+    std::vector<_u8> answer;
+    delay(20);
+    ans = getLidarConf(RPLIDAR_CONF_SCAN_MODE_DETECTTYPE, answer, std::vector<_u8>(), timeoutInMs);
+
+    if (IS_FAIL(ans)) {
+        return ans;
+    }
+    if (answer.size() < sizeof(rplidar_device_detect_mode_t)) {
+        return RESULT_INVALID_DATA;
+    }
+    const _u8* p_answer = reinterpret_cast<const _u8*>(&answer[0]);
+    mode.detect_mode_type = *p_answer;
+
+    return ans;
+}
 
 u_result RPlidarDriverImplCommon::getDeviceInfo(rplidar_response_device_info_t & info, _u32 timeout)
 {
@@ -236,7 +276,7 @@ u_result RPlidarDriverImplCommon::getDeviceInfo(rplidar_response_device_info_t &
     if (!isConnected()) return RESULT_OPERATION_FAIL;
 
     _disableDataGrabbing();
-
+    delay(20);
     {
         rp::hal::AutoLocker l(_lock);
 
@@ -299,6 +339,12 @@ u_result RPlidarDriverImplCommon::getFrequency(const RplidarScanMode& scanMode, 
     float sample_duration = scanMode.us_per_sample;
     frequency = 1000000.0f / (count * sample_duration);
     return RESULT_OK;
+}
+
+u_result RPlidarDriverImplCommon::setLidarIpConf(const rplidar_ip_conf_t& conf, _u32 timeout)
+{
+    u_result ans = setLidarConf(RPLIDAR_CONF_LIDAR_STATIC_IP_ADDR, &conf, sizeof(rplidar_ip_conf_t), timeout);
+    return ans;
 }
 
 u_result RPlidarDriverImplCommon::_waitNode(rplidar_response_measurement_node_t * node, _u32 timeout)
@@ -381,7 +427,6 @@ u_result RPlidarDriverImplCommon::_waitScanData(rplidar_response_measurement_nod
     count = recvNodeCount;
     return RESULT_OPERATION_TIMEOUT;
 }
-
 
 u_result RPlidarDriverImplCommon::_waitCapsuledNode(rplidar_response_capsule_measurement_nodes_t & node, _u32 timeout)
 {
@@ -1303,6 +1348,56 @@ u_result RPlidarDriverImplCommon::checkSupportConfigCommands(bool& outSupport, _
     return ans;
 }
 
+u_result RPlidarDriverImplCommon::setLidarConf(_u32 type, const void* payload, size_t payloadSize, _u32 timeout)
+{
+    if (type < 0x00010000 || type >0x0001FFFF)
+        return RESULT_INVALID_DATA;
+    std::vector<_u8> requestPkt;
+    requestPkt.resize(sizeof(rplidar_payload_set_scan_conf_t) + payloadSize);
+    if (!payload) payloadSize = 0;
+    rplidar_payload_set_scan_conf_t* query = reinterpret_cast<rplidar_payload_set_scan_conf_t*>(&requestPkt[0]);
+
+    query->type = type;
+
+
+    if (payloadSize)
+        memcpy(&query[1], payload, payloadSize);
+    u_result ans;
+    {
+        rp::hal::AutoLocker l(_lock);
+        if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_SET_LIDAR_CONF, &requestPkt[0], requestPkt.size()))) {
+            return ans;
+        }
+        delay(200);
+        // waiting for confirmation
+        rplidar_ans_header_t response_header;
+        if (IS_FAIL(ans = _waitResponseHeader(&response_header, timeout))) {
+            return ans;
+        }
+        // verify whether we got a correct header
+        if (response_header.type != RPLIDAR_ANS_TYPE_SET_LIDAR_CONF) {
+            return RESULT_INVALID_DATA;
+        }
+        _u32 header_size = (response_header.size_q30_subtype & RPLIDAR_ANS_HEADER_SIZE_MASK);
+        if (header_size < sizeof(type)) {
+            return RESULT_INVALID_DATA;
+        }
+        if (!_chanDev->waitfordata(header_size, timeout)) {
+            return RESULT_OPERATION_TIMEOUT;
+        }
+        delay(100);
+        struct _rplidar_response_set_lidar_conf {
+            _u32 type;
+            _u32 result;
+        } answer;
+
+        _chanDev->recvdata(reinterpret_cast<_u8*>(&answer), header_size);
+        return answer.result;
+    
+    }
+
+}
+
 u_result RPlidarDriverImplCommon::getLidarConf(_u32 type, std::vector<_u8> &outputBuf, const std::vector<_u8> &reserve, _u32 timeout)
 {
     rplidar_payload_get_scan_conf_t query;
@@ -1322,13 +1417,13 @@ u_result RPlidarDriverImplCommon::getLidarConf(_u32 type, std::vector<_u8> &outp
         if (IS_FAIL(ans = _sendCommand(RPLIDAR_CMD_GET_LIDAR_CONF, &query, sizeof(query)))) {
             return ans;
         }
-
+        delay(20);
         // waiting for confirmation
         rplidar_ans_header_t response_header;
         if (IS_FAIL(ans = _waitResponseHeader(&response_header, timeout))) {
             return ans;
         }
-
+        delay(20);
         // verify whether we got a correct header
         if (response_header.type != RPLIDAR_ANS_TYPE_GET_LIDAR_CONF) {
             return RESULT_INVALID_DATA;
@@ -1343,6 +1438,7 @@ u_result RPlidarDriverImplCommon::getLidarConf(_u32 type, std::vector<_u8> &outp
             return RESULT_OPERATION_TIMEOUT;
         }
 
+        delay(20);
         std::vector<_u8> dataBuf;
         dataBuf.resize(header_size);
         _chanDev->recvdata(reinterpret_cast<_u8 *>(&dataBuf[0]), header_size);
@@ -1396,6 +1492,18 @@ u_result RPlidarDriverImplCommon::getTypicalScanMode(_u16& outMode, _u32 timeout
         outMode = RPLIDAR_CONF_SCAN_COMMAND_EXPRESS;
         return ans;
     }
+    return ans;
+}
+
+u_result RPlidarDriverImplCommon::getDeviceLevel(_u8& level, _u32 timeoutInMs)
+{
+    u_result ans;
+    std::vector<_u8> answer;
+    ans = getLidarConf(RPLIDAR_CONF_LIDAR_DEVICE_LEVEL, answer, std::vector<_u8>(), timeoutInMs);
+    if (IS_FAIL(ans)) 
+        level = 1;
+    else
+        level = answer[0];
     return ans;
 }
 
@@ -2320,6 +2428,46 @@ u_result RPlidarDriverTCP::connect(const char * ipStr, _u32 port, _u32 flag)
 
         // establish the serial connection...
         if(!_chanDev->bind(ipStr, port))
+            return RESULT_INVALID_DATA;
+    }
+
+    _isConnected = true;
+
+    checkMotorCtrlSupport(_isSupportingMotorCtrl);
+    stopMotor();
+
+    return RESULT_OK;
+}
+
+RPlidarDriverUDP::RPlidarDriverUDP()
+{
+    _chanDev = new UDPChannelDevice();
+}
+
+RPlidarDriverUDP::~RPlidarDriverUDP()
+{
+    // force disconnection
+    disconnect();
+}
+
+void RPlidarDriverUDP::disconnect()
+{
+    if (!_isConnected) return;
+    stop();
+    _chanDev->close();
+}
+
+u_result RPlidarDriverUDP::connect(const char* ipStr, _u32 port, _u32 flag)
+{
+    if (isConnected()) return RESULT_ALREADY_DONE;
+
+    if (!_chanDev) return RESULT_INSUFFICIENT_MEMORY;
+
+    {
+        rp::hal::AutoLocker l(_lock);
+
+        // establish the serial connection...
+        if (!_chanDev->bind(ipStr, port))
             return RESULT_INVALID_DATA;
     }
 

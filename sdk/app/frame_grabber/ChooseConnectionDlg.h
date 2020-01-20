@@ -54,7 +54,7 @@ public:
         DDX_CONTROL_HANDLE(IDC_COMBO_NETWORK_PROTOCOL, m_combo_NetProtocol)
         DDX_CONTROL_HANDLE(IDC_RADIO_VIA_SERIAL_PORT, m_radio_ViaSerialPort)
         DDX_CONTROL_HANDLE(IDC_RADIO_VIA_NETWORK, m_radio_ViaNetwork)
-
+        DDX_CONTROL_HANDLE(IDC_BUTTON_AUTO_DISCOVERY, m_btn_auto_discovery)
 	END_DDX_MAP();
 	
 	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -79,14 +79,14 @@ public:
             int port;
         } network;
 
-    } connnect_type_info;
+    } connection_type_info;
 
-    connnect_type_info getSelectedConnectionTypeInfo()
+    connection_type_info getSelectedConnectionTypeInfo()
     {
         return _selectedConnectType;
     }
 
-    
+protected:
     CComboBox m_combo_SerialPort;
     CComboBox m_combo_SerialBaudSel;
     CComboBox m_combo_NetProtocol;
@@ -94,12 +94,13 @@ public:
     CEdit m_edit_IpPort;
     CButton m_radio_ViaSerialPort;
     CButton m_radio_ViaNetwork;
-   
-protected:
+    CButton m_btn_auto_discovery;
+
     int     _selectedID;
     int     _selectedBaudRate;
     bool    _usingNetwork;
-    connnect_type_info _selectedConnectType;
+    connection_type_info _selectedConnectType;
+    std::vector<std::string> _protocolList;
 };
 
 /////////////////////////////////////////////////////////////////////////////

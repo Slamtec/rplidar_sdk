@@ -35,8 +35,12 @@
 #include "scanView.h"
 #include "MainFrm.h"
 #include "FreqSetDlg.h"
+#include "IpConfigDlg.h"
 
 const int REFRESEH_TIMER = 0x800;
+
+#define SCAN_MODE_MENU_REC_BEGIN  2001
+#define DETECT_MODE_MENU_REC_BEGIN 3001
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
@@ -44,6 +48,16 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
     if(pMsg->wParam >= scanModeMenuRecBegin_ && pMsg->wParam < scanModeMenuRecBegin_ + modeVec_.size())
     {
         scanModeSelect(pMsg->wParam);
+    }
+
+    if (pMsg->wParam >= detectModeMenuRecBegin_ && pMsg->wParam < detectModeMenuRecBegin_ + RPLIDAR_DETECT_MODE_COUNT)
+    {
+        detectModeSelect(pMsg->wParam);
+    }
+
+    if (pMsg->wParam == IPCONFIG_SUB)
+    {
+        ipConfig();
     }
     
     if(CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
@@ -93,6 +107,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 
     workingMode = WORKING_MODE_IDLE;
     LidarMgr::GetInstance().lidar_drv->getDeviceInfo(devInfo);
+
     //get scan mode information
     modeVec_.clear();
 
@@ -102,7 +117,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
     LidarMgr::GetInstance().lidar_drv->getTypicalScanMode(typicalMode); 
 
     scanModeSubMenu_.CreateMenu();
-    scanModeMenuRecBegin_ = 2001;
+    scanModeMenuRecBegin_ = SCANMODE_SUB + 1;
     std::vector<RplidarScanMode>::iterator modeIter = modeVec_.begin();
     int index = 0;
     for(; modeIter != modeVec_.end(); modeIter++)
@@ -110,17 +125,48 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
         scanModeSubMenu_.AppendMenuA(MF_STRING, scanModeMenuRecBegin_ + index, modeIter->scan_mode);
         index++;
     }
-    m_CmdBar.GetMenu().GetSubMenu(2).InsertMenuA(SCANMODE_SUB, MF_POPUP | MF_BYPOSITION, (UINT)scanModeSubMenu_.m_hMenu, "Scan Mode");
+    detectModeTypeSubMenu_.CreateMenu();
+    ipConfigMenu_.CreateMenu();
+    support_detect_mode_ctrl = false;
+    if ((devInfo.model >> 4) > RPLIDAR_T_SERIES_MINUM_MAJOR_ID) {
+        LidarMgr::GetInstance().lidar_drv->getDeviceMacAddr(devMac.macaddr);
+        detectModeMenuRecBegin_ = DETECTMODE_SUB + 1;
+        std::vector<std::string> detectMode;
+        detectMode.resize(RPLIDAR_DETECT_MODE_COUNT);
+        for (int i = 0; i < RPLIDAR_DETECT_MODE_COUNT; i++)
+        {
+            if (i == RPLIDAR_DETECT_MODE_ANTI)
+                detectModeTypeSubMenu_.AppendMenuA(MF_STRING, DETECT_MODE_MENU_REC_BEGIN + i, TEXT("Anti"));
+            else if (i == RPLIDAR_DETECT_MODE_ENHANCE)
+                detectModeTypeSubMenu_.AppendMenuA(MF_STRING, DETECT_MODE_MENU_REC_BEGIN + i, TEXT("Enhance"));
+        }
+
+        rplidar_device_detect_mode_t mode;
+
+        LidarMgr::GetInstance().lidar_drv->getLidarDetectMode(mode);
+        support_detect_mode_ctrl = true;
+        usingDetectMode_ = mode.detect_mode_type;
+        LidarMgr::GetInstance().lidar_drv->getDeviceLevel(device_level_);
+
+        m_CmdBar.GetMenu().GetSubMenu(COMMAND_MENU).AppendMenuA(MF_STRING, IPCONFIG_SUB, TEXT("Ip Config"));
+
+        m_CmdBar.GetMenu().GetSubMenu(COMMAND_MENU).InsertMenuA(DETECTMODE_SUB, MF_POPUP | MF_BYPOSITION, (UINT)detectModeTypeSubMenu_.m_hMenu, "Detect Mode");
+        support_motor_ctrl = true;
+    }
+    else
+        LidarMgr::GetInstance().lidar_drv->checkMotorCtrlSupport(support_motor_ctrl);
+
+    m_CmdBar.GetMenu().GetSubMenu(OPTION_MENU).InsertMenuA(SCANMODE_SUB, MF_POPUP | MF_BYPOSITION, (UINT)scanModeSubMenu_.m_hMenu, "Scan Mode");
     usingScanMode_ = typicalMode;
     updateControlStatus();
 
-    LidarMgr::GetInstance().lidar_drv->checkMotorCtrlSupport(support_motor_ctrl);
     // setup timer
     this->SetTimer(REFRESEH_TIMER, 1000/30);
     checkDeviceHealth();
     UISetCheck(ID_CMD_STOP, 1);
     forcescan = 0;
     UISetCheck(ID_OPTION_EXPRESSMODE, TRUE);
+    
     return 0;
 }
 
@@ -138,6 +184,50 @@ LRESULT CMainFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
     bHandled = FALSE;
 
     return 1;
+}
+
+void CMainFrame::detectModeSelect(int mode)
+{
+    if ((unsigned int)mode >= detectModeMenuRecBegin_ && (unsigned int)mode < detectModeMenuRecBegin_ + RPLIDAR_DETECT_MODE_COUNT)
+    {
+        onSwitchMode(WORKING_MODE_IDLE);
+        usingDetectMode_ = (unsigned int)mode - DETECT_MODE_MENU_REC_BEGIN;
+        rplidar_device_detect_mode_t detecMode;
+        detecMode.detect_mode_type = usingDetectMode_;
+        LidarMgr::GetInstance().lidar_drv->setLidarDetectMode(detecMode);
+
+        LidarMgr::GetInstance().lidar_drv->getLidarDetectMode(detecMode);
+        if (detecMode.detect_mode_type == usingDetectMode_) 
+        {
+            updateControlStatus();
+        }
+            
+    }
+    
+}
+
+void CMainFrame::ipConfig()
+{
+
+    onSwitchMode(WORKING_MODE_IDLE);
+    CIpConfigDlg dlg;
+    dlg.initIpconfig(channelRecord_.network.ip, NULL, NULL);
+    dlg.DoModal();
+    if (dlg.getIpConfResult())
+    {
+        memset(channelRecord_.network.ip, 0, sizeof(channelRecord_.network.ip));
+        memcpy(channelRecord_.network.ip, dlg.ip_, sizeof(channelRecord_.network.ip));
+    }
+    LidarMgr::GetInstance().onDisconnect();
+    if (!LidarMgr::GetInstance().onConnectUdp(channelRecord_.network.ip, channelRecord_.network.port)) {
+       MessageBox("Cannot bind to the udp server,please reset the lidar", "Error", MB_OK);
+    }
+    else
+    {
+        char display_buffer[64];
+        sprintf(display_buffer,"Reconnect to the lidar(%s)", channelRecord_.network.ip);
+        MessageBox(display_buffer, "Success", MB_OK);
+    }
 }
 
 void CMainFrame::scanModeSelect(int mode)
@@ -281,18 +371,25 @@ void    CMainFrame::updateControlStatus()
     CString strTmp(menuText);
     LPCTSTR lp = (LPCTSTR)strTmp;
 
-    m_CmdBar.GetMenu().GetSubMenu(2).ModifyMenuA(SCANMODE_SUB, MF_BYPOSITION, (UINT)scanModeSubMenu_.m_hMenu, lp);
+    m_CmdBar.GetMenu().GetSubMenu(OPTION_MENU).ModifyMenuA(SCANMODE_SUB, MF_BYPOSITION, (UINT)scanModeSubMenu_.m_hMenu, lp);
     scanModeSubMenu_.CheckMenuRadioItem(0, modeVec_.size()-1,usingScanMode_,MF_BYPOSITION);
-
+    if (support_detect_mode_ctrl)
+    {
+        detectModeTypeSubMenu_.CheckMenuRadioItem(0, RPLIDAR_DETECT_MODE_COUNT - 1, usingDetectMode_, MF_BYPOSITION);
+        m_scanview.setDetectMode(usingDetectMode_);
+    }
+    
     //determine if menu items are usable
     switch (workingMode)
     {
     case WORKING_MODE_IDLE:
-        m_CmdBar.GetMenu().GetSubMenu(2).EnableMenuItem(SCANMODE_SUB, MF_BYPOSITION | MF_ENABLED);
+        m_CmdBar.GetMenu().GetSubMenu(OPTION_MENU).EnableMenuItem(SCANMODE_SUB, MF_BYPOSITION | MF_ENABLED);
+        m_CmdBar.GetMenu().GetSubMenu(COMMAND_MENU).EnableMenuItem(DETECTMODE_SUB, MF_BYPOSITION | MF_ENABLED);
         break;
 
     case WORKING_MODE_SCAN:
-        m_CmdBar.GetMenu().GetSubMenu(2).EnableMenuItem(SCANMODE_SUB, MF_BYPOSITION | MF_DISABLED);
+        m_CmdBar.GetMenu().GetSubMenu(OPTION_MENU).EnableMenuItem(SCANMODE_SUB, MF_BYPOSITION | MF_DISABLED);
+        m_CmdBar.GetMenu().GetSubMenu(COMMAND_MENU).EnableMenuItem(DETECTMODE_SUB, MF_BYPOSITION | MF_DISABLED);
         break;
     }
 
@@ -317,6 +414,7 @@ void    CMainFrame::onUpdateTitle()
 
     if((devInfo.model>>4)>RPLIDAR_T_SERIES_MINUM_MAJOR_ID){
        sprintf(deviceDesc,"T%d",(devInfo.model>>4)-RPLIDAR_T_SERIES_MINUM_MAJOR_ID) ;
+       devInfo.model = (devInfo.model & 0xf0) | device_level_;
     }else if((devInfo.model>>4)>RPLIDAR_S_SERIES_MINUM_MAJOR_ID){
        sprintf(deviceDesc,"S%d",(devInfo.model>>4)-RPLIDAR_S_SERIES_MINUM_MAJOR_ID) ;
     }else{
@@ -337,6 +435,17 @@ void    CMainFrame::onUpdateTitle()
         startpos+=2;
     }
 
+    if ((devInfo.model >> 4) > RPLIDAR_T_SERIES_MINUM_MAJOR_ID) {
+        int startpos = strlen(titleMsg);
+        sprintf(&titleMsg[startpos], " MAC: ");
+        startpos = strlen(titleMsg);
+        for (int pos = 0; pos < sizeof(devMac.macaddr); ++pos)
+        {
+            sprintf(&titleMsg[startpos], "%02X-", devMac.macaddr[pos]);
+            startpos += 3;
+        }
+        titleMsg[startpos - 4] = 0;
+    }
     this->SetWindowTextA(titleMsg);
 }
 

@@ -51,6 +51,9 @@
     <ClCompile Include="..\..\..\app\frame_grabber\AutoDiscoveryDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\app\frame_grabber\IpConfigDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\app\frame_grabber\drvlogic\common.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\app\frame_grabber\dns_sd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\app\frame_grabber\IpConfigDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

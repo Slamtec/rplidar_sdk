@@ -47,6 +47,7 @@ public:
     virtual u_result clearNetSerialRxCache();
     virtual u_result getAllSupportedScanModes(std::vector<RplidarScanMode>& outModes, _u32 timeoutInMs = DEFAULT_TIMEOUT);
     virtual u_result getTypicalScanMode(_u16& outMode, _u32 timeoutInMs = DEFAULT_TIMEOUT);
+    virtual u_result getDeviceLevel(_u8& level, _u32 timeoutInMs= DEFAULT_TIMEOUT);
     virtual u_result checkSupportConfigCommands(bool& outSupport, _u32 timeoutInMs = DEFAULT_TIMEOUT);
 
     virtual u_result getScanModeCount(_u16& modeCount, _u32 timeoutInMs = DEFAULT_TIMEOUT);
@@ -54,6 +55,7 @@ public:
     virtual u_result getMaxDistance(float &maxDistance, _u16 scanModeID, _u32 timeoutInMs = DEFAULT_TIMEOUT);
     virtual u_result getScanModeAnsType(_u8 &ansType, _u16 scanModeID, _u32 timeoutInMs = DEFAULT_TIMEOUT);
     virtual u_result getScanModeName(char* modeName, _u16 scanModeID, _u32 timeoutInMs = DEFAULT_TIMEOUT);
+    virtual u_result setLidarConf(_u32 type, const void* payload, size_t payloadSize, _u32 timeout = DEFAULT_TIMEOUT);
     virtual u_result getLidarConf(_u32 type, std::vector<_u8> &outputBuf, const std::vector<_u8> &reserve = std::vector<_u8>(), _u32 timeout = DEFAULT_TIMEOUT);
 
     virtual u_result startScan(bool force, bool useTypicalScan, _u32 options = 0, RplidarScanMode* outUsedScanMode = NULL);
@@ -62,7 +64,11 @@ public:
 
     virtual u_result getHealth(rplidar_response_device_health_t & health, _u32 timeout = DEFAULT_TIMEOUT);
     virtual u_result getDeviceInfo(rplidar_response_device_info_t & info, _u32 timeout = DEFAULT_TIMEOUT);
+    virtual u_result getDeviceMacAddr(_u8* macAddrArray, _u32 timeoutInMs = DEFAULT_TIMEOUT);
+    virtual u_result setLidarDetectMode(rplidar_device_detect_mode_t mode, _u32 timeoutInMs = DEFAULT_TIMEOUT);
+    virtual u_result getLidarDetectMode(rplidar_device_detect_mode_t& mode, _u32 timeoutInMs = DEFAULT_TIMEOUT);
     virtual u_result checkIfTofLidar(bool & isTofLidar, _u32 timeout = DEFAULT_TIMEOUT);
+    virtual u_result setLidarIpConf(const rplidar_ip_conf_t& conf, _u32 timeout = DEFAULT_TIMEOUT);
     virtual u_result getSampleDuration_uS(rplidar_response_sample_rate_t & rateInfo, _u32 timeout = DEFAULT_TIMEOUT);
     virtual u_result setMotorPWM(_u16 pwm);
     virtual u_result setLidarSpinSpeed(_u16 rpm, _u32 timeout = DEFAULT_TIMEOUT);

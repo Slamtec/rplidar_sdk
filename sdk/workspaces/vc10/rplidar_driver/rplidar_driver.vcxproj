@@ -98,6 +98,7 @@
     <ClInclude Include="..\..\..\sdk\src\rplidar_driver_impl.h" />
     <ClInclude Include="..\..\..\sdk\src\rplidar_driver_serial.h" />
     <ClInclude Include="..\..\..\sdk\src\rplidar_driver_TCP.h" />
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_UDP.h" />
     <ClInclude Include="..\..\..\sdk\src\sdkcommon.h" />
   </ItemGroup>
   <ItemGroup>

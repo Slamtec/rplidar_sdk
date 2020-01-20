@@ -63,6 +63,7 @@ struct RplidarScanMode {
 enum {
     DRIVER_TYPE_SERIALPORT = 0x0,
     DRIVER_TYPE_TCP = 0x1,
+    DRIVER_TYPE_UDP = 0x2,
 };
 
 class ChannelDevice
@@ -139,7 +140,8 @@ public:
 
     /// Get typical scan mode of lidar
     virtual u_result getTypicalScanMode(_u16& outMode, _u32 timeoutInMs = DEFAULT_TIMEOUT) = 0;
-
+    /// Get device level, only for T serials
+    virtual u_result getDeviceLevel(_u8& level, _u32 timeoutInMs = DEFAULT_TIMEOUT) = 0;
     /// Start scan
     ///
     /// \param force            Force the core system to output scan data regardless whether the scanning motor is rotating or not.
@@ -170,6 +172,10 @@ public:
     /// \param timeout       The operation timeout value (in millisecond) for the serial port communication  
     virtual u_result getDeviceInfo(rplidar_response_device_info_t & info, _u32 timeout = DEFAULT_TIMEOUT) = 0;
 
+    virtual u_result getDeviceMacAddr(_u8* macAddrArray, _u32 timeoutInMs = DEFAULT_TIMEOUT) = 0;
+
+    virtual u_result setLidarDetectMode(rplidar_device_detect_mode_t mode, _u32 = DEFAULT_TIMEOUT) = 0;
+    virtual u_result getLidarDetectMode(rplidar_device_detect_mode_t& mode, _u32 timeoutInMs = DEFAULT_TIMEOUT) = 0;
     /// Get the sample duration information of the RPLIDAR.
     /// DEPRECATED, please use RplidarScanMode::us_per_sample
     ///
@@ -207,6 +213,7 @@ public:
     /// \param timeout       The operation timeout value (in millisecond) for the serial port communication. 
     virtual u_result checkIfTofLidar(bool & isTofLidar, _u32 timeout = DEFAULT_TIMEOUT) = 0;
 
+    virtual u_result setLidarIpConf(const rplidar_ip_conf_t& conf, _u32 timeout = DEFAULT_TIMEOUT) = 0;
     /// Calculate RPLIDAR's current scanning frequency from the given scan data
     /// DEPRECATED, please use getFrequency(RplidarScanMode, size_t)
     ///

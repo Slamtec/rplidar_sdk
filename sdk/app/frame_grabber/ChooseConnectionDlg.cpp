@@ -37,9 +37,12 @@ static const int baudRateLists[] = {
     256000
 };
 
+
 CChooseConnectionDlg::CChooseConnectionDlg()
     :_usingNetwork(false)
 {
+    _protocolList.push_back("TCP");
+    _protocolList.push_back("UDP");
 }
 
 LRESULT CChooseConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -52,7 +55,7 @@ LRESULT CChooseConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
         m_combo_SerialPort.AddString(buf);
     }
     m_combo_SerialPort.SetCurSel(2);
-
+    //int x = sizeof(protocolList);
     for (int pos = 0; pos < sizeof(baudRateLists)/sizeof(int); ++pos)
     {
         sprintf(buf, "%d", baudRateLists[pos]);
@@ -61,8 +64,10 @@ LRESULT CChooseConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 
     m_combo_SerialBaudSel.SetCurSel(1);
 
-    m_combo_NetProtocol.AddString("TCP/IP");
-    m_combo_NetProtocol.AddString("UDP");
+    for (int pos = 0; pos < _protocolList.size(); pos++)
+    {
+        m_combo_NetProtocol.AddString(_protocolList[pos].c_str());
+    }
     m_combo_NetProtocol.SetCurSel(0);
     
     CString   csIP = _T("192.168.1.1");
@@ -71,7 +76,7 @@ LRESULT CChooseConnectionDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPA
 
     m_edit_IpPort.SetWindowTextA("20108");
 
-    
+    m_btn_auto_discovery.EnableWindow(false);
 
     m_radio_ViaSerialPort.Click();
     return TRUE;
@@ -90,11 +95,12 @@ LRESULT CChooseConnectionDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCt
         sprintf(_selectedConnectType.network.ip, "%d.%u.%u.%u", ipSel[3], ipSel[2], ipSel[1], ipSel[0]);
 
         m_combo_NetProtocol.GetLBText(m_combo_NetProtocol.GetCurSel(), _selectedConnectType.network.protocol);
-
+       
         char buffer[64];
         m_edit_IpPort.GetWindowTextA(buffer,sizeof(buffer));
         _selectedConnectType.network.port = atoi(buffer);
         _selectedConnectType.network.usingNetwork = true;
+
     }
     else
     {
@@ -115,7 +121,7 @@ LRESULT CChooseConnectionDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hW
 
 LRESULT CChooseConnectionDlg::OnConnectionTypeClicked(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    bool sel;
+    int sel;
     sel = m_radio_ViaSerialPort.GetCheck();
     if (sel)
     {
@@ -124,6 +130,7 @@ LRESULT CChooseConnectionDlg::OnConnectionTypeClicked(WORD /*wNotifyCode*/, WORD
         m_IpAdress.EnableWindow(false);
         m_edit_IpPort.EnableWindow(false);
         m_combo_NetProtocol.EnableWindow(false);
+        m_btn_auto_discovery.EnableWindow(false);
         _usingNetwork = false;
         return 0;
     }
@@ -135,6 +142,7 @@ LRESULT CChooseConnectionDlg::OnConnectionTypeClicked(WORD /*wNotifyCode*/, WORD
         m_IpAdress.EnableWindow(true);
         m_edit_IpPort.EnableWindow(true);
         m_combo_NetProtocol.EnableWindow(true);
+        m_btn_auto_discovery.EnableWindow(true);
         _usingNetwork = true;
         return 0;
     }
@@ -146,6 +154,24 @@ LRESULT CChooseConnectionDlg::OnAutoDiscoveryClicked(WORD /*wNotifyCode*/, WORD 
     if (device_discovery.DoModal() == IDCANCEL)
     {
         return false;
+    }
+    if (device_discovery.portSel != -1) 
+    {
+        DWORD ipSel = (DWORD) * ((LPDWORD)device_discovery.ipSel);
+        m_IpAdress.SetAddress(ipSel);
+        char buffer[16];
+        sprintf(buffer, "%d", device_discovery.portSel);
+        m_edit_IpPort.SetWindowTextA(buffer);
+        for (int pos = 0; pos < _protocolList.size(); pos++)
+        {
+
+            m_combo_NetProtocol.GetLBText(pos, buffer);
+            if (buffer == device_discovery.protocol) 
+            {
+                m_combo_NetProtocol.SetCurSel(pos);
+                break;
+            }
+        }
     }
    
     return 0;

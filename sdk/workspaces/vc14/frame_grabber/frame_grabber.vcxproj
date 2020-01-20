@@ -42,12 +42,14 @@
     <OutDir>$(SolutionDir)\..\..\output\win32\$(Configuration)\</OutDir>
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\..\app\frame_grabber;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\..\..\app\frame_grabber\ref\dnssd;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(SolutiaonDir)\..\..\obj\win32\$(ProjectName)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)\..\..\output\win32\$(Configuration)\</OutDir>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\..\app\frame_grabber;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\..\..\app\frame_grabber\ref\dnssd;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -65,7 +67,7 @@
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;dnssd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -100,7 +102,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;dnssd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -122,9 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\app\frame_grabber\AboutDlg.cpp" />
+    <ClCompile Include="..\..\..\app\frame_grabber\AutoDiscoveryDlg.cpp" />
+    <ClCompile Include="..\..\..\app\frame_grabber\ChooseConnectionDlg.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\drvlogic\lidarmgr.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\framegrabber.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\FreqSetDlg.cpp" />
+    <ClCompile Include="..\..\..\app\frame_grabber\IpConfigDlg.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\MainFrm.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\scanView.cpp" />
     <ClCompile Include="..\..\..\app\frame_grabber\SerialSelDlg.cpp" />
@@ -135,15 +140,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\app\frame_grabber\AboutDlg.h" />
+    <ClInclude Include="..\..\..\app\frame_grabber\AutoDiscoveryDlg.h" />
+    <ClInclude Include="..\..\..\app\frame_grabber\ChooseConnectionDlg.h" />
+    <ClInclude Include="..\..\..\app\frame_grabber\dns_sd.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\drvlogic\common.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\drvlogic\lidarmgr.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\FreqSetDlg.h" />
+    <ClInclude Include="..\..\..\app\frame_grabber\IpConfigDlg.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\MainFrm.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\resource.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\scanView.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\SerialSelDlg.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\stdafx.h" />
     <ClInclude Include="..\..\..\app\frame_grabber\TcpChannelSelDlg.h" />
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_UDP.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\app\frame_grabber\framegrabber.rc" />

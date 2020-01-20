@@ -31,8 +31,17 @@
 #pragma once
 
 #include "drvlogic\lidarmgr.h"
+#include "ChooseConnectionDlg.h"
 
-#define    SCANMODE_SUB 1
+#define FILE_MENU     0
+#define COMMAND_MENU  1
+#define OPTION_MENU   2
+#define VIEW_MENU     3
+#define HELP_MENU     4
+
+#define    SCANMODE_SUB   2000
+#define    DETECTMODE_SUB 3000
+#define    IPCONFIG_SUB   4000
 
 class CMainFrame : 
     public CFrameWindowImpl<CMainFrame>, 
@@ -89,9 +98,15 @@ public:
     void    onSwitchMode(int newMode);
     void    onRefreshScanData();
     void    checkDeviceHealth();
-
     void    updateControlStatus();
     void    scanModeSelect(int mode);
+    void    detectModeSelect(int mode);
+    void    ipConfig();
+
+    void    recordChannel(const CChooseConnectionDlg::connection_type_info connectionInfo)
+    {
+        channelRecord_ = connectionInfo;
+    }
 
     LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled);
@@ -117,16 +132,23 @@ protected:
     bool    useExpressMode;
     bool    inExpressMode;
     bool    support_motor_ctrl;
+    bool    support_detect_mode_ctrl;
 
     //lidar changeable parameters
     _u16     usingScanMode_;   //record the currently using scan mode
-
+    _u8      usingDetectMode_;
+    _u8      device_level_;
     //firmware 1.24
     std::vector<RplidarScanMode> modeVec_;
 
     rplidar_response_device_info_t devInfo;
+    rplidar_response_device_macaddr_info_t devMac;
 
     //subMenu of scan mode
     CMenu scanModeSubMenu_;
+    CMenu detectModeTypeSubMenu_;
+    CMenu ipConfigMenu_;
     size_t scanModeMenuRecBegin_;
+    size_t detectModeMenuRecBegin_;
+    CChooseConnectionDlg::connection_type_info channelRecord_;
 };

@@ -87,6 +87,9 @@
     <ClInclude Include="..\..\..\sdk\src\rplidar_driver_impl.h">
       <Filter>sdk\src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_UDP.h">
+      <Filter>sdk\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\sdk\src\arch\win32\net_serial.cpp">

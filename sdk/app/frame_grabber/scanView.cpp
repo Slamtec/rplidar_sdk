@@ -52,6 +52,7 @@ CScanView::CScanView()
     _mouse_angle = 0;
     _mouse_pt.x= _mouse_pt.y = 0;
     _is_scanning = false;
+    _detect_mode = -1;
 }
 
 BOOL CScanView::PreTranslateMessage(MSG* pMsg)
@@ -170,9 +171,20 @@ void CScanView::onDrawSelf(CDCHandle dc)
         sprintf(txtBuffer, "Current: %.2f Deg: %.2f", _scan_data[picked_point].dist,  _scan_data[picked_point].angle);
         memDC.TextOutA(DEF_MARGIN, DEF_MARGIN + 20, txtBuffer);
 
+        if (_detect_mode != -1)
+        {
+            memDC.SetTextColor(RGB(255, 0, 0));
+            if (_detect_mode == RPLIDAR_DETECT_MODE_ANTI)
+                sprintf(txtBuffer, "[ANTI]");
+            else if (_detect_mode == RPLIDAR_DETECT_MODE_ENHANCE)
+                sprintf(txtBuffer, "[ENHANCE]");
+            memDC.TextOutA(clientRECT.Width() - 200, DEF_MARGIN + 20, txtBuffer);
+        }
+
         memDC.SetTextColor(RGB(255,255,255));
         memDC.SetDCBrushColor(RGB(255,0,0));
         memDC.Rectangle(clientRECT.Width() - 100, DEF_MARGIN + 25, clientRECT.Width() - 60, DEF_MARGIN + 30);
+
         int frequency = -1;
         if(_is_scanning)
             frequency = int(floor(1000.0 / _sample_duration+0.5));
@@ -180,6 +192,7 @@ void CScanView::onDrawSelf(CDCHandle dc)
             frequency = 0;
         sprintf(txtBuffer, "%d K", frequency);
         memDC.TextOutA(clientRECT.Width() - 100, DEF_MARGIN + 20, txtBuffer);
+        
     }
 
     dc.BitBlt(0, 0, clientRECT.Width(), clientRECT.Height()
@@ -267,6 +280,11 @@ void CScanView::setScanData(rplidar_response_measurement_node_hq_t *buffer, size
     _sample_duration = sampleDuration;
     _scan_speed = 1000000.0f / (count * sampleDuration);
     this->Invalidate();
+}
+
+void CScanView::setDetectMode(int mode)
+{
+    _detect_mode = (int)mode;
 }
 
 void CScanView::stopScan()
