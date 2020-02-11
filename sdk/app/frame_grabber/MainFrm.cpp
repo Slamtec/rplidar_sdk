@@ -135,8 +135,8 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
         detectMode.resize(RPLIDAR_DETECT_MODE_COUNT);
         for (int i = 0; i < RPLIDAR_DETECT_MODE_COUNT; i++)
         {
-            if (i == RPLIDAR_DETECT_MODE_ANTI)
-                detectModeTypeSubMenu_.AppendMenuA(MF_STRING, DETECT_MODE_MENU_REC_BEGIN + i, TEXT("Anti"));
+            if (i == RPLIDAR_DETECT_MODE_ANTIJAM)
+                detectModeTypeSubMenu_.AppendMenuA(MF_STRING, DETECT_MODE_MENU_REC_BEGIN + i, TEXT("Antijam"));
             else if (i == RPLIDAR_DETECT_MODE_ENHANCE)
                 detectModeTypeSubMenu_.AppendMenuA(MF_STRING, DETECT_MODE_MENU_REC_BEGIN + i, TEXT("Enhance"));
         }

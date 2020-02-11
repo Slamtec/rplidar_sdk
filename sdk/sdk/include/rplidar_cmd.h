@@ -298,7 +298,7 @@ typedef struct _rplidar_ip_conf_t {
 }__attribute__((packed)) rplidar_ip_conf_t;
 
 enum rplidar_detect_mode_t {
-    RPLIDAR_DETECT_MODE_ANTI = 0,
+    RPLIDAR_DETECT_MODE_ANTIJAM = 0,
     RPLIDAR_DETECT_MODE_ENHANCE = 1,
     RPLIDAR_DETECT_MODE_COUNT = RPLIDAR_DETECT_MODE_ENHANCE + 1,
 } ;  // only for T1 now

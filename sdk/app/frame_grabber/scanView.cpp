@@ -169,16 +169,16 @@ void CScanView::onDrawSelf(CDCHandle dc)
 
         memDC.SetTextColor(RGB(255,0,0));
         sprintf(txtBuffer, "Current: %.2f Deg: %.2f", _scan_data[picked_point].dist,  _scan_data[picked_point].angle);
-        memDC.TextOutA(DEF_MARGIN, DEF_MARGIN + 20, txtBuffer);
+        memDC.TextOutA(DEF_MARGIN, DEF_MARGIN + 18, txtBuffer);
 
         if (_detect_mode != -1)
         {
             memDC.SetTextColor(RGB(255, 0, 0));
-            if (_detect_mode == RPLIDAR_DETECT_MODE_ANTI)
-                sprintf(txtBuffer, "[ANTI]");
+            if (_detect_mode == RPLIDAR_DETECT_MODE_ANTIJAM)
+                sprintf(txtBuffer, "[ANTIJAM]");
             else if (_detect_mode == RPLIDAR_DETECT_MODE_ENHANCE)
                 sprintf(txtBuffer, "[ENHANCE]");
-            memDC.TextOutA(clientRECT.Width() - 200, DEF_MARGIN + 20, txtBuffer);
+            memDC.TextOutA(DEF_MARGIN, DEF_MARGIN + 65, txtBuffer);
         }
 
         memDC.SetTextColor(RGB(255,255,255));

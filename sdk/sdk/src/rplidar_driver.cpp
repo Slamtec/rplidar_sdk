@@ -1777,12 +1777,6 @@ u_result RPlidarDriverImplCommon::startScanExpress(bool force, _u16 scanMode, _u
 
     stop(); //force the previous operation to stop
 
-    if (scanMode == RPLIDAR_CONF_SCAN_COMMAND_STD)
-    {
-        return startScan(force, false, 0, outUsedScanMode);
-    }
-
-    
     bool ifSupportLidarConf = false;
     ans = checkSupportConfigCommands(ifSupportLidarConf);
     if (IS_FAIL(ans)) return RESULT_INVALID_DATA;
@@ -1843,6 +1837,11 @@ u_result RPlidarDriverImplCommon::startScanExpress(bool force, _u16 scanMode, _u
     }
 
     {
+        if (scanAnsType == RPLIDAR_ANS_TYPE_MEASUREMENT) 
+        {
+            return startScan(force, false, 0, outUsedScanMode);
+        }
+
         rp::hal::AutoLocker l(_lock);
 
         rplidar_payload_express_scan_t scanReq;
