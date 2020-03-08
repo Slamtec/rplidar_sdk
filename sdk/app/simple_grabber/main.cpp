@@ -189,7 +189,7 @@ int main(int argc, const char * argv[]) {
         }
 
         printf("\n"
-                "Version: "RPLIDAR_SDK_VERSION"\n"
+                "Version: " RPLIDAR_SDK_VERSION "\n"
                 "Firmware Ver: %d.%02d\n"
                 "Hardware Rev: %d\n"
                 , devinfo.firmware_version>>8
