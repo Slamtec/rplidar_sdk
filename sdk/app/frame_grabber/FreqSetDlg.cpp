@@ -63,7 +63,15 @@ LRESULT CFreqSetDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL
     }
 
     m_sld_freq.SetPos(pwm);
-    LidarMgr::GetInstance().lidar_drv->setMotorPWM(pwm);
+    bool isTof;
+    LidarMgr::GetInstance().lidar_drv->checkIfTofLidar(isTof);
+    if (isTof) {
+        _u16 rpm = pwm;
+        LidarMgr::GetInstance().lidar_drv->setLidarSpinSpeed(pwm);
+    
+    }else{
+        LidarMgr::GetInstance().lidar_drv->setMotorPWM(pwm);
+    }
     return 0;
 }
 

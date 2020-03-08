@@ -351,8 +351,8 @@ void    CMainFrame::onSwitchMode(int newMode)
     case WORKING_MODE_IDLE:
         {
             // stop the previous operation
-            LidarMgr::GetInstance().lidar_drv->stop();
             LidarMgr::GetInstance().lidar_drv->stopMotor();
+            LidarMgr::GetInstance().lidar_drv->stop();
             UISetCheck(ID_CMD_STOP, 1);
             UISetCheck(ID_CMD_GRAB_PEAK, 0);
             UISetCheck(ID_CMD_GRAB_FRAME, 0);
