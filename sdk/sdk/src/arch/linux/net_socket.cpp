@@ -435,7 +435,7 @@ public:
     virtual u_result send(const void * buffer, size_t len) 
     {
         size_t ans = ::send( _socket_fd, buffer, len, MSG_NOSIGNAL);
-        if (ans == (int)len) {
+        if (ans == len) {
             return RESULT_OK;
         } else {
             switch (errno) {
