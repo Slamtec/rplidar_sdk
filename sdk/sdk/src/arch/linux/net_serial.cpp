@@ -322,13 +322,16 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
 
     if ( isOpened() )
     {
-        if ( ioctl(serial_fd, FIONREAD, returned_size) == -1) return ANS_DEV_ERR;
+        if ( ioctl(serial_fd, FIONREAD, returned_size) == -1) {
+            return ANS_DEV_ERR;
+        }
         if (*returned_size >= data_count)
         {
             return 0;
         }
     }
 
+    uint lastReturnedSize = 0;
     while ( isOpened() )
     {
         /* Do the select */
@@ -351,7 +354,7 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
             if (FD_ISSET(_selfpipe[0], &input_set)) {   
                 // require aborting the current operation
                 int ch;
-                for (;;) {                    
+                for (;;) {    
                     if (::read(_selfpipe[0], &ch, 1) == -1) {
                         break;
                     }
@@ -367,17 +370,27 @@ int raw_serial::waitfordata(size_t data_count, _u32 timeout, size_t * returned_s
             assert (FD_ISSET(serial_fd, &input_set));
 
 
-            if ( ioctl(serial_fd, FIONREAD, returned_size) == -1) return ANS_DEV_ERR;
+            auto ioRet = ioctl(serial_fd, FIONREAD, returned_size);
+            if ( ioRet == -1) {
+                return ANS_DEV_ERR;
+            }
             if (*returned_size >= data_count)
             {
                 return 0;
             }
             else 
             {
+                if (lastReturnedSize == *returned_size) {
+                    // don't want a tight loop, return what we've got
+                    // note: requires caller handle incomplete wait (not a timeout)
+                    return 0;
+                }
+                lastReturnedSize = *returned_size;
                 int remain_timeout = timeout_val.tv_sec*1000000 + timeout_val.tv_usec;
                 int expect_remain_time = (data_count - *returned_size)*1000000*8/_baudrate;
-                if (remain_timeout > expect_remain_time)
+                if (remain_timeout > expect_remain_time) {
                     usleep(expect_remain_time);
+                }
             }
         }
         
@@ -425,7 +438,7 @@ void raw_serial::cancelOperation()
     _operation_aborted = true;
     if (_selfpipe[1] == -1) return;
 
-    ::write(_selfpipe[1], "x", 1);
+    assert(::write(_selfpipe[1], "x", 1));
 }
 
 _u32 raw_serial::getTermBaudBitmap(_u32 baud)

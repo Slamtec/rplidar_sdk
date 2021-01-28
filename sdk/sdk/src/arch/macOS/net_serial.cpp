@@ -221,6 +221,7 @@ int raw_serial::waitfordata(_word_size_t data_count, _u32 timeout, _word_size_t 
         }
     }
 
+    uint lastReturnedSize = 0;
     while ( isOpened() )
     {
         /* Do the select */
@@ -249,6 +250,12 @@ int raw_serial::waitfordata(_word_size_t data_count, _u32 timeout, _word_size_t 
             }
             else
             {
+                if (lastReturnedSize == *returned_size) {
+                    // don't want a tight loop, return what we've got
+                    // note: requires caller handle incomplete wait (not a timeout)
+                    return 0;
+                }
+                lastReturnedSize = *returned_size;
                 int remain_timeout = timeout_val.tv_sec*1000000 + timeout_val.tv_usec;
                 int expect_remain_time = (data_count - *returned_size)*1000000*8/_baudrate;
                 if (remain_timeout > expect_remain_time)
