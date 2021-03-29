@@ -1,0 +1,26 @@
+diff --git a/sdk/sdk/src/arch/linux/net_socket.cpp b/rplidar/sdk/src/arch/linux/net_socket.cpp
+index 0124a13..f188b4c 100644
+--- a/sdk/sdk/src/arch/linux/net_socket.cpp
++++ b/sdk/sdk/src/arch/linux/net_socket.cpp
+@@ -167,7 +167,7 @@ u_result SocketAddress::getAddressAsString(char * buffer, size_t buffersize) con
+ 
+         break;
+     }
+-    return ans<=0?RESULT_OPERATION_FAIL:RESULT_OK;
++    return (reinterpret_cast<signed long>(ans)) <= 0 ? RESULT_OPERATION_FAIL:RESULT_OK;
+ }
+ 
+ 
+diff --git a/sdk/sdk/src/hal/event.h b/rplidar/sdk/src/hal/event.h
+index 5e05234..0ab2ef7 100644
+--- a/sdk/sdk/src/hal/event.h
++++ b/sdk/sdk/src/hal/event.h
+@@ -42,7 +42,7 @@ public:
+     enum
+     {
+         EVENT_OK = 1,
+-        EVENT_TIMEOUT = -1,
++        EVENT_TIMEOUT = 0xFF,
+         EVENT_FAILED = 0,
+     };
+     

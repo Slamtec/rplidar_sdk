@@ -42,7 +42,7 @@ public:
     enum
     {
         EVENT_OK = 1,
-        EVENT_TIMEOUT = -1,
+        EVENT_TIMEOUT = 0xFF,
         EVENT_FAILED = 0,
     };
     
