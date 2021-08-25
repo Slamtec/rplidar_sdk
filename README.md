@@ -4,13 +4,13 @@ Slamtec RPLIDAR Public SDK for C++
 Introduction
 ------------
 
-Slamtec RPLIDAR(https://www.slamtec.com/lidar/a3) series is a set of high-performance and low-cost LIDAR(https://en.wikipedia.org/wiki/Lidar) sensors, which is the perfect sensor of 2D SLAM, 3D reconstruction, multi-touch, and safety applications.
+Slamtec RPLIDAR(https://www.slamtec.com) series is a set of high-performance and low-cost LIDAR(https://en.wikipedia.org/wiki/Lidar) sensors, which is the perfect sensor of 2D SLAM, 3D reconstruction, multi-touch, and safety applications.
 
 This is the public SDK of RPLIDAR products in C++, and open-sourced under GPLv3 license.
 
 If you are using ROS (Robot Operating System), please use our open-source ROS node directly: https://github.com/slamtec/rplidar_ros .
 
-If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(https://www.slamtec.com/robostudio) (currently only support Windows) to do the evaulation.
+If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(https://www.slamtec.com/robostudio) (currently only support Windows and Android) to do the evaulation.
 
 License
 -------
@@ -20,7 +20,7 @@ The demo applications are licensed under GPLv3 license.
 
 Release Notes
 -------------
-
+* [v2.0.0](https://github.com/Slamtec/rplidar_sdk/tree/feature/release-2.0/docs/ReleaseNote.v2.0.0.md)
 * [v1.12.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.12.0.md)
 * [v1.11.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.11.0.md)
 * [v1.10.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.10.0.md)
@@ -32,20 +32,23 @@ Release Notes
 Supported Platforms
 -------------------
 
-RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 projects and Makefile.
+RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 and 2019 projects and Makefile.
 
 | LIDAR Model \ Platform | Windows | macOS | Linux |
 | ---------------------- | ------- | ----- | ------|
 | A1                     | Yes     | Yes   | Yes   |
 | A2                     | Yes     | Yes   | Yes   |
 | A3                     | Yes     | Yes   | Yes   |
+| S1                     | Yes     | Yes   | Yes   |
+| S2                     | Yes     | Yes   | Yes   |
 
 Quick Start
 -----------
 
 ### On Windows
 
-If you have Microsoft Visual Studio 2010 installed, just open sdk/workspaces/vc10/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
+If you have Microsoft Visual Studio 2010 installed, just open workspaces/vc10/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
+If you have Microsoft Visual Studio 2019 installed, just open workspaces/vc14/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
 
 ### On macOS and Linux
 
@@ -105,50 +108,42 @@ Usually you only need to include this file to get all functions of RPLIDAR SDK.
 
 ### SDK Initialization and Termination
 
-There are two static interfaces to create and dispose RPLIDAR driver instance. Each RPLIDAR driver instance can only be used to communicate with one RPLIDAR device. You can freely allocate arbitrary number of RPLIDAR driver instances to communicate with multiple RPLIDAR devices concurrently.
-
-    /// Create an RPLIDAR Driver Instance
-    /// This interface should be invoked first before any other operations
-    ///
-    /// \param drivertype the connection type used by the driver. 
-    static RPlidarDriver * RPlidarDriver::CreateDriver(_u32 drivertype = DRIVER_TYPE_SERIALPORT);
-
-    /// Dispose the RPLIDAR Driver Instance specified by the drv parameter
-    /// Applications should invoke this interface when the driver instance is no longer used in order to free memory
-    static void RPlidarDriver::DisposeDriver(RPlidarDriver * drv);
-
 For example:
 
-    #include <rplidar.h>
+    #include "sl_lidar.h" 
+	#include "sl_lidar_driver.h"
 
     int main(int argc, char* argv)
     {
-        RPlidarDriver* lidar = RPlidarDriver::CreateDriver();
-
+	    ///  Create a communication channel instance
+	    IChannel* _channel;
+	    Result<ISerialChannel*> channel = createSerialPortChannel("/dev/ttyUSB0", 115200);
+	    ///  Create a LIDAR driver instance
+        ILidarDriver * lidar = *createLidarDriver();
+	    auto res = (*lidar)->connect(*channel);
+	    if(SL_IS_OK(res)){
+	        sl_lidar_response_device_info_t deviceInfo;
+            res = (*lidar)->getDeviceInfo(deviceInfo);
+            if(SL_IS_OK(res)){
+	            printf("Model: %d, Firmware Version: %d.%d, Hardware Version: %d\n",
+                deviceInfo.model,
+                deviceInfo.firmware_version >> 8, deviceInfo.firmware_version & 0xffu,
+                deviceInfo.hardware_version);
+            }else{
+                fprintf(stderr, "Failed to get device information from LIDAR %08x\r\n", res);
+            }
+        }else{
+            fprintf(stderr, "Failed to connect to LIDAR %08x\r\n", res);
+        }
         // TODO
-
-        RPlidarDriver::DisposeDriver(lidar);
+		
+        /// Delete Lidar Driver and channel Instance
+        * delete *lidar;
+        * delete *channel;
     }
-
-### Connect to RPLIDAR
-
-After creating an RPlidarDriver instance, you can use `connect()` method to connect to a serial port:
-
-    u_result res = lidar->connect("/dev/ttyUSB0", 115200);
-
-    if (IS_OK(res))
-    {
-        // TODO
-        lidar->disconnect();
-    }
-    else
-    {
-        fprintf(stderr, "Failed to connect to LIDAR %08x\r\n", res);
-    }
-
 ### Start spinning motor
 
-The LIDAR is not spinning by default. Method `startMotor()` is used to start this motor.
+The LIDAR is not spinning by default for A1, A2 and A3. Method `startMotor()` is used to start this motor. If the Lidar is S1 or S2, please skip this step.
 
 > For RPLIDAR A1 series, this method will enable DTR signal to make the motor rotate; for A2 and A3 serieses, the method will make the accessory board to output a PWM signal to MOTOR_PWM pin.
 
@@ -160,8 +155,8 @@ The LIDAR is not spinning by default. Method `startMotor()` is used to start thi
 
 Slamtec RPLIDAR support different scan modes for compatibility and performance. Since RPLIDAR SDK 1.6.0, a new API `getAllSupportedScanModes()` has been added to the SDK.
 
-    std::vector<RplidarScanMode> scanModes;
-    lidar->getAllSupportedScanModes(scanModes);
+    std::vector<LidarScanMode> scanModes;
+    lidar_drv->getAllSupportedScanModes(scanModes);
 
 You can pick a scan mode from this list like this:
 
@@ -169,7 +164,7 @@ You can pick a scan mode from this list like this:
 
 Or you can just use the typical scan mode of RPLIDAR like this:
 
-    RplidarScanMode scanMode;
+    LidarScanMode scanMode;
     lidar->startScan(false, true, 0, &scanMode);
 
 ### Grab scan data
@@ -178,8 +173,8 @@ When the RPLIDAR is scanning, you can use `grabScanData()` and `grabScanDataHq()
 
 > The `grabScanDataHq()` API is backward compatible with old LIDAR models and old firmwares. So we recommend always using this API, and use `grabScanData()` only for compatibility.
 
-    rplidar_response_measurement_node_hq_t nodes[8192];
-    size_t nodeCount = sizeof(nodes)/sizeof(rplidar_response_measurement_node_hq_t);
+    sl_lidar_response_measurement_node_hq_t nodes[8192];
+    size_t nodeCount = sizeof(nodes)/sizeof(sl_lidar_response_measurement_node_hq_t);
     res = lidar->grabScanDataHq(nodes, nodeCount);
 
     if (IS_FAIL(res))
@@ -187,7 +182,7 @@ When the RPLIDAR is scanning, you can use `grabScanData()` and `grabScanDataHq()
         // failed to get scan data
     }
 
-### Defination of data structure `rplidar_response_measurement_node_hq_t`
+### Defination of data structure `sl_lidar_response_measurement_node_hq_t`
 
 The defination of `rplidar_response_measurement_node_hq_t` is:
 
@@ -195,12 +190,12 @@ The defination of `rplidar_response_measurement_node_hq_t` is:
     #pragma pack(1)
     #endif
 
-    typedef struct rplidar_response_measurement_node_hq_t {
+    typedef struct sl_lidar_response_measurement_node_hq_t {
         _u16   angle_z_q14; 
         _u32   dist_mm_q2; 
         _u8    quality;  
         _u8    flag;
-    } __attribute__((packed)) rplidar_response_measurement_node_hq_t;
+    } __attribute__((packed)) sl_lidar_response_measurement_node_hq_t;
 
     #if defined(_WIN32)
     #pragma pack()
@@ -213,7 +208,7 @@ The definiton of each fields are:
 | angle_z_q14 | u16_z_q14 | It is a fix-point angle desciption in z presentation |
 | dist_mm_q2  | u32_q2    | Distance in millimeter of fixed point values         |
 | quality     | u8        | Measurement quality (0 ~ 255)                        |
-| flag        | u8        | Flags, current only one bit used: `RPLIDAR_RESP_MEASUREMENT_SYNCBIT` |
+| flag        | u8        | Flags, current only one bit used: `SL_LIDAR_RESP_MEASUREMENT_SYNCBIT` |
 
 For example:
 
@@ -225,4 +220,4 @@ Contact Slamtec
 
 If you have any extra questions, please feel free to contact us at our support email:
 
-    support AT slamtec DOT com
+    support@slamtec.com

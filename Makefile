@@ -31,37 +31,15 @@
 # * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # *
 # */
-#
-HOME_TREE := ../
 
-MODULE_NAME := $(notdir $(CURDIR))
+HOME_TREE := .
+
+MAKE_TARGETS := sdk app
 
 include $(HOME_TREE)/mak_def.inc
 
-CXXSRC += src/sl_lidar_driver.cpp \
-          src/hal/thread.cpp\
-          src/sl_crc.cpp\
-	      src/sl_serial_channel.cpp\
-	      src/sl_tcp_channel.cpp\
-	      src/sl_udp_channel.cpp
-
-C_INCLUDES += -I$(CURDIR)/include -I$(CURDIR)/src
-
-ifeq ($(BUILD_TARGET_PLATFORM),Linux)
-CXXSRC += src/arch/linux/net_serial.cpp \
-          src/arch/linux/net_socket.cpp \
-          src/arch/linux/timer.cpp 
-endif
-
-
-ifeq ($(BUILD_TARGET_PLATFORM),Darwin)
-CXXSRC += src/arch/macOS/net_serial.cpp \
-          src/arch/macOS/net_socket.cpp \
-          src/arch/macOS/timer.cpp
-endif
-
-all: build_sdk
+all: make_subs
 
 include $(HOME_TREE)/mak_common.inc
 
-clean: clean_sdk
+clean: make_subs
