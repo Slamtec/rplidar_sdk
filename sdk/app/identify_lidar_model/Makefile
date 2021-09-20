@@ -1,6 +1,6 @@
 #/*
 # * Copyright (C) 2014  RoboPeak
-# * Copyright (C) 2014 - 2019 Shanghai Slamtec Co., Ltd.
+# * Copyright (C) 2014 - 2018 Shanghai Slamtec Co., Ltd.
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,20 @@
 # *
 # */
 #
-HOME_TREE := ../
+HOME_TREE := ../../
 
-MAKE_TARGETS := simple_grabber ultra_simple identify_lidar_model
+MODULE_NAME := $(notdir $(CURDIR))
 
 include $(HOME_TREE)/mak_def.inc
 
-all: make_subs
+CXXSRC += main.cpp
+C_INCLUDES += -I$(CURDIR)/../../sdk/include -I$(CURDIR)/../../sdk/src
+
+EXTRA_OBJ := 
+LD_LIBS += -lstdc++ -lpthread
+
+all: build_app
 
 include $(HOME_TREE)/mak_common.inc
 
-clean: make_subs
+clean: clean_app
