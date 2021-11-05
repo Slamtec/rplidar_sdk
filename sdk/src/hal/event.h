@@ -42,8 +42,8 @@ public:
     enum
     {
         EVENT_OK = 1,
-        EVENT_TIMEOUT = -1,
         EVENT_FAILED = 0,
+        EVENT_TIMEOUT = 0xFFFFFFFFFFFFFFFF,
     };
     
     Event(bool isAutoReset = true, bool isSignal = false)
