@@ -120,12 +120,14 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
     }
 	ipConfigMenu_.CreateMenu();
 	lidarType = 1;
-	if ((devInfo.model >> 4) > LIDAR_T_SERIES_MINUM_MAJOR_ID) {
-        LidarMgr::GetInstance().lidar_drv->getDeviceMacAddr(devMac.macaddr);
-        m_CmdBar.GetMenu().GetSubMenu(1).AppendMenuA(MF_STRING, IPCONFIG_SUB, TEXT("Ip Config"));
-        support_motor_ctrl = true;
-		lidarType = 2;
-        
+	if ((devInfo.model >> 4) > (LIDAR_S_SERIES_MINUM_MAJOR_ID+1)) {
+        sl_result  ans = LidarMgr::GetInstance().lidar_drv->getDeviceMacAddr(devMac.macaddr);
+        if (SL_IS_OK(ans)) {
+            m_CmdBar.GetMenu().GetSubMenu(1).AppendMenuA(MF_STRING, IPCONFIG_SUB, TEXT("Ip Config"));
+            support_motor_ctrl = true;
+            lidarType = 2;
+        }
+       
     }
 	
     MotorCtrlSupport motorSupport;
@@ -179,7 +181,7 @@ void CMainFrame::ipConfig()
 
     onSwitchMode(WORKING_MODE_IDLE);
     CIpConfigDlg dlg;
-    dlg.initIpconfig(channelRecord_.network.ip, NULL, NULL);
+    dlg.initIpconfig(channelRecord_.network.ip, "255.255.255.0", "192.168.11.1");
     dlg.DoModal();
     if (dlg.getIpConfResult())
     {

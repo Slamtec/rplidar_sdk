@@ -1,4 +1,10 @@
+.vscode
 .vs
+*.user
+*.aps
+obj
+output
+*.ipch
 *.sdf
 sdk/obj
 **/ipch

@@ -167,7 +167,7 @@ void CScanView::onDrawSelf(CDCHandle dc)
         memDC.FillSolidRect((int)endptX-1,(int)endptY-1, 2, 2,RGB(255,0,0));
 
         memDC.SetTextColor(RGB(255,0,0));
-        sprintf(txtBuffer, "Current: %.2f Deg: %.2f", _scan_data[picked_point].dist,  _scan_data[picked_point].angle);
+        sprintf(txtBuffer, "Current: %.2f Deg: %.2f,Quality:%d", _scan_data[picked_point].dist,  _scan_data[picked_point].angle, _scan_data[picked_point].quality);
         memDC.TextOutA(DEF_MARGIN, DEF_MARGIN + 20, txtBuffer);
 
         memDC.SetTextColor(RGB(255,255,255));
