@@ -42,13 +42,14 @@
     <OutDir>$(SolutionDir)\..\..\output\win32\$(Configuration)\</OutDir>
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\..\app\frame_grabber;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\..\..\app\frame_grabber\ref\dnssd;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)..\..\..\app\frame_grabber\ref\dnssd;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(SolutiaonDir)\..\..\obj\win32\$(ProjectName)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)\..\..\output\win32\$(Configuration)\</OutDir>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)..\..\..\app\frame_grabber;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\..\..\app\frame_grabber\ref\dnssd;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -58,8 +59,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\app\frame_grabber\ref\wtl;..\..\..\sdk\src;..\..\..\sdk\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;_DEBUG;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\app\frame_grabber;..\..\..\app\frame_grabber\ref\wtl;..\..\..\sdk\src;..\..\..\sdk\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <Link>
@@ -101,7 +102,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Gdiplus.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;dnssd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>

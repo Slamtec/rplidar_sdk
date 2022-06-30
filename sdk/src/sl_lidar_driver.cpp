@@ -873,7 +873,7 @@ namespace sl {
                 rp::hal::AutoLocker l(_lock);
                 ans = _sendCommand(SL_LIDAR_CMD_GET_LIDAR_CONF, &query, sizeof(query));
                 if (!ans) return ans;
-				//delay(50);
+				delay(20);
                 // waiting for confirmation
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
