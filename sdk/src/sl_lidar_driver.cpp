@@ -553,7 +553,7 @@ namespace sl {
         {
             switch (_dataEvt.wait(timeout))
             {
-            case rp::hal::Event::EVENT_TIMEOUT:
+            case static_cast<unsigned long>(rp::hal::Event::EVENT_TIMEOUT):
                 count = 0;
                 return SL_RESULT_OPERATION_TIMEOUT;
             case rp::hal::Event::EVENT_OK:
