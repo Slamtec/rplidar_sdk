@@ -78,6 +78,7 @@ namespace sl {
 			sl_result checkMotorCtrlSupport(MotorCtrlSupport & support, sl_u32 timeout = DEFAULT_TIMEOUT);
 			sl_result getFrequency(const LidarScanMode& scanMode, const sl_lidar_response_measurement_node_hq_t* nodes, size_t count, float& frequency);
 			sl_result setLidarIpConf(const sl_lidar_ip_conf_t& conf, sl_u32 timeout);
+			sl_result getLidarIpConf(sl_lidar_ip_conf_t& conf, sl_u32 timeout);
 			sl_result getHealth(sl_lidar_response_device_health_t& health, sl_u32 timeout = DEFAULT_TIMEOUT);
 			sl_result getDeviceMacAddr(sl_u8* macAddrArray, sl_u32 timeoutInMs);
 			sl_result ascendScanData(sl_lidar_response_measurement_node_t * nodebuffer, size_t count);

@@ -637,6 +637,19 @@ namespace sl {
 			return ans;
 		}
 
+        sl_result getLidarIpConf(sl_lidar_ip_conf_t& conf, sl_u32 timeout)
+        {
+            Result<nullptr_t> ans = SL_RESULT_OK;
+            std::vector<sl_u8> reserve(2);
+
+            std::vector<sl_u8> answer;
+            ans = getLidarConf(SL_LIDAR_CONF_LIDAR_STATIC_IP_ADDR, answer, reserve, timeout);
+            int len = answer.size();
+            if (0 == len) return SL_RESULT_INVALID_DATA;
+            memcpy(&conf, &answer[0], len);
+            return ans;
+        }
+       
         sl_result getHealth(sl_lidar_response_device_health_t& health, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
             Result<nullptr_t> ans = SL_RESULT_OK;
@@ -873,7 +886,7 @@ namespace sl {
                 rp::hal::AutoLocker l(_lock);
                 ans = _sendCommand(SL_LIDAR_CMD_GET_LIDAR_CONF, &query, sizeof(query));
                 if (!ans) return ans;
-				delay(20);
+				delay(50);
                 // waiting for confirmation
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
