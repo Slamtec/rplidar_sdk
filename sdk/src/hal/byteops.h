@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "hal/types.h"
+
 // byte swapping operations for compiling time
 
 #define __static_byteswap_16(x)  ((_u16)(				\

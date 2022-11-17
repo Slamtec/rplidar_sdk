@@ -46,10 +46,6 @@
 #define SL_LIDAR_ANS_HEADER_SIZE_MASK       0x3FFFFFFF
 #define SL_LIDAR_ANS_HEADER_SUBTYPE_SHIFT   (30)
 
-#if defined(_WIN32)
-#pragma pack(1)
-#endif
-
 typedef struct sl_lidar_cmd_packet_t
 {
     sl_u8 syncByte; //must be SL_LIDAR_CMD_SYNC_BYTE
@@ -67,6 +63,3 @@ typedef struct sl_lidar_ans_header_t
     sl_u8  type;
 } __attribute__((packed)) sl_lidar_ans_header_t;
 
-#if defined(_WIN32)
-#pragma pack()
-#endif

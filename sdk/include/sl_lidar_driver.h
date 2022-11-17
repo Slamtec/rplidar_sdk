@@ -31,41 +31,19 @@
 
 #pragma once
 
-#ifndef __cplusplus
-#error "The Slamtec LIDAR SDK requires a C++ compiler to be built"
-#endif
 
 #include <vector>
 #include <map>
 #include <string>
 
-#ifndef DEPRECATED
-    #ifdef __GNUC__
-        #define DEPRECATED(func) func __attribute__ ((deprecated))
-    #elif defined(_MSC_VER)
-        #define DEPRECATED(func) __declspec(deprecated) func
-    #else
-        #pragma message("WARNING: You need to implement DEPRECATED for this compiler")
-        #define DEPRECATED(func) func
-    #endif
-#endif
-
-
 #include "sl_lidar_cmd.h"
-
+#include "rplidar_scan.h"
+#include "rplidar_cmd.h"
 #include <string>
 
-namespace sl {
+#include <Arduino.h>
 
-#ifdef DEPRECATED
-#define DEPRECATED_WARN(fn, replacement) do { \
-        static bool __shown__ = false; \
-        if (!__shown__) { \
-            printDeprecationWarn(fn, replacement); \
-            __shown__ = true; \
-        } \
-    } while (0)
-#endif
+namespace sl {
 
     /**
     * Lidar scan mode
@@ -87,138 +65,6 @@ namespace sl {
         // The name of scan mode (padding with 0 if less than 64 characters)
         char    scan_mode[64];
     };
-
-    template <typename T>
-    struct Result
-    {
-        sl_result err;
-        T value;
-        Result(const T& value)
-            : err(SL_RESULT_OK)
-            , value(value)
-        {
-        }
-
-        Result(sl_result err)
-            : err(err)
-            , value()
-        {
-        }
-
-        operator sl_result() const
-        {
-            return err;
-        }
-
-        operator bool() const
-        {
-            return SL_IS_OK(err);
-        }
-
-        T& operator* ()
-        {
-            return value;
-        }
-
-        T* operator-> ()
-        {
-            return &value;
-        }
-    };
-
-    /**
-    * Abstract interface of communication channel
-    */
-    class IChannel
-    {
-    public:
-        virtual ~IChannel() {}
-
-    public:
-        /**
-        * Open communication channel (return true if succeed)
-        */
-        virtual bool open() = 0;
-
-        /**
-        * Close communication channel
-        */
-        virtual void close() = 0;
-
-        /**
-        * Flush all written data to remote endpoint
-        */
-        virtual void flush() = 0;
-
-        /**
-        * Wait for some data
-        * \param size Bytes to wait
-        * \param timeoutInMs Wait timeout (in microseconds, -1 for forever)
-        * \param actualReady [out] actual ready bytes
-        * \return true for data ready
-        */
-        virtual bool waitForData(size_t size, sl_u32 timeoutInMs = -1, size_t* actualReady = nullptr) = 0;
-
-        /**
-        * Send data to remote endpoint
-        * \param data The data buffer
-        * \param size The size of data buffer (in bytes)
-        * \return Bytes written (negative for write failure)
-        */
-        virtual int write(const void* data, size_t size) = 0;
-
-        /**
-        * Read data from the chanel
-        * \param buffer The buffer to receive data
-        * \param size The size of the read buffer
-        * \return Bytes read (negative for read failure)
-        */
-        virtual int read(void* buffer, size_t size) = 0;
-
-        /**
-        * Clear read cache
-        */
-        virtual void clearReadCache() = 0;
-
-    private:
-
-    };
-
-    /**
-    * Abstract interface of serial port channel
-    */
-    class ISerialPortChannel : public IChannel
-    {
-    public:
-        virtual ~ISerialPortChannel() {}
-
-    public:
-        virtual void setDTR(bool dtr) = 0;
-    };
-
-    /**
-    * Create a serial channel
-    * \param device Serial port device
-    *                   e.g. on Windows, it may be com3 or \\.\com10
-    *                   on Unix-Like OS, it may be /dev/ttyS1, /dev/ttyUSB2, etc
-    * \param baudrate Baudrate
-    *                   Please refer to the datasheet for the baudrate (maybe 115200 or 256000)
-    */
-    Result<IChannel*> createSerialPortChannel(const std::string& device, int baudrate);
-
-    /**
-    * Create a TCP channel
-    * \param ip IP address of the device
-    * \param port TCP port
-    */
-    Result<IChannel*> createTcpChannel(const std::string& ip, int port);
-
-    /**
-    * Create a UDP channel
-    * \param ip IP address of the device
-    * \param port UDP port
-    */
-    Result<IChannel*> createUdpChannel(const std::string& ip, int port);
 
     enum MotorCtrlSupport
     {
@@ -261,7 +107,7 @@ namespace sl {
         * \param channel The communication channel
         *                    Note: you should manage the lifecycle of the channel object, make sure it is alive during lidar driver's lifecycle
         */
-        virtual sl_result connect(IChannel* channel) = 0;
+        virtual sl_result connect(HardwareSerial* channel) = 0;
 
         /**
         * Disconnect from the LIDAR
@@ -274,10 +120,10 @@ namespace sl {
         virtual bool isConnected() = 0;
 
     public:
-        enum
-        {
-            DEFAULT_TIMEOUT = 2000
-        };
+        // enum
+        // {
+        //     DEFAULT_TIMEOUT = 2000
+        // };
 
     public:
         /// Ask the LIDAR core system to reset it self
@@ -338,19 +184,13 @@ namespace sl {
         /// \param count         The number of sample nodes inside the given buffer
         virtual sl_result getFrequency(const LidarScanMode& scanMode, const sl_lidar_response_measurement_node_hq_t* nodes, size_t count, float& frequency) = 0;
 
-		///Set LPX and S2E series lidar's static IP address
+		///Set LPX series lidar's static IP address
 		///
 		/// \param conf             Network parameter that LPX series lidar owned
 		/// \param timeout          The operation timeout value (in millisecond) for the ethernet udp communication
 		virtual sl_result setLidarIpConf(const sl_lidar_ip_conf_t& conf, sl_u32 timeout = DEFAULT_TIMEOUT) = 0;
-       
-        ///Get LPX and S2E series lidar's static IP address
-        ///
-        /// \param conf             Network parameter that LPX series lidar owned
-        /// \param timeout          The operation timeout value (in millisecond) for the ethernet udp communication
-        virtual sl_result getLidarIpConf( sl_lidar_ip_conf_t& conf, sl_u32 timeout = DEFAULT_TIMEOUT) = 0;
-  // 
-		/////Get LPX series lidar's MAC address
+
+		///Get LPX series lidar's MAC address
 		///
 		/// \param macAddrArray         The device MAC information returned from the LPX series lidar
 		virtual sl_result getDeviceMacAddr(sl_u8* macAddrArray, sl_u32 timeoutInMs = DEFAULT_TIMEOUT) = 0;
