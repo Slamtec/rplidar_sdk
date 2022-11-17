@@ -994,3 +994,15 @@ void rplidar_scan_task(void* params) {
     vTaskDelete(NULL);
 
 }
+// void AIFreeRTOS::startTaskImpl(void* _this)
+// {
+//   static_cast<AIFreeRTOS*>(_this)->task();
+// }
+
+// void AIFreeRTOS::startTask(void)
+// {	
+//  xTaskCreatePinnedToCore(this->startTaskImpl, "Task", 2048, this, _taskPriority, NULL, _taskCore);
+// }
+
+// void AIFreeRTOS::task(void)
+// {	
