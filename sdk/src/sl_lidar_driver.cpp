@@ -201,9 +201,6 @@ namespace sl {
             if (!channel) return SL_RESULT_OPERATION_FAIL;
             if (isConnected()) return SL_RESULT_ALREADY_DONE;
             _channel = channel;
-            
-            _channel->setRxBufferSize(RPLIDAR_SERIAL_SIZE_RX);
-            _channel->begin(RPLIDAR_SERIAL_BAUDRATE);
             _isConnected = true;
 
             ans =checkMotorCtrlSupport(_isSupportingMotorCtrl,500);
@@ -1209,6 +1206,7 @@ namespace sl {
             // I assume this is to kill the task baby
             delay(30);
             // _cachethread.join();
+            // TODO : Proper task deletion
         }
         
         sl_result _clearRxDataCache()
@@ -1218,6 +1216,28 @@ namespace sl {
             _channel->flush();
             return SL_RESULT_OK;
         }
+
+        void _scanTaskWrapper(void* _this) {
+            static_cast<SlamtecLidarDriver*>(_this)->task();
+        }
+
+        void _createScanTask(rplidar_scan_cache scan) {
+            _scan_type = scan;
+            xTaskCreatePinnedToCore(this->_scanTaskWrapper, "Task", 2048, this, _taskPriority, NULL, _taskCore);
+        }
+
+        // void AIFreeRTOS::startTaskImpl(void* _this)
+        // {
+        //   static_cast<AIFreeRTOS*>(_this)->task();
+        // }
+
+        // void AIFreeRTOS::startTask(void)
+        // {	
+        //  xTaskCreatePinnedToCore(this->startTaskImpl, "Task", 2048, this, _taskPriority, NULL, _taskCore);
+        // }
+
+        // void AIFreeRTOS::task(void)
+        // {	
 
     private:
         
@@ -1229,6 +1249,7 @@ namespace sl {
         sl_u16                  _cached_sampleduration_std;
         sl_u16                  _cached_sampleduration_express;
         // bool                    _scan_node_synced;
+        rplidar_scan_cache      _scan_type;
 
         // sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf[RPLIDAR_BUFFER_SIZE];
         // size_t                                   _cached_scan_node_hq_count;

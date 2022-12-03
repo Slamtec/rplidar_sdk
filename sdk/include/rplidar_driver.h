@@ -51,13 +51,13 @@ namespace rp { namespace standalone{ namespace rplidar {
 //};
 class RPlidarDriver {
 public:
-    enum {
-        DEFAULT_TIMEOUT = 2000, //2000 ms
-    };
+    // enum {
+    //     DEFAULT_TIMEOUT = 2000, //2000 ms
+    // };
 
-    enum {
-        MAX_SCAN_NODES = 8192,
-    };
+    // enum {
+    //     MAX_SCAN_NODES = 8192,
+    // };
 
     enum {
         LEGACY_SAMPLE_DURATION = 476,
@@ -66,12 +66,10 @@ public:
 public:
     /// Create an RPLIDAR Driver Instance
     /// This interface should be invoked first before any other operations
-    ///
-    /// \param drivertype the connection type used by the driver. 
-    static RPlidarDriver * CreateDriver(_u32 drivertype = CHANNEL_TYPE_SERIALPORT);
+    static RPlidarDriver * CreateDriver();
     
 
-    RPlidarDriver(sl_u32 channelType);
+    RPlidarDriver();
 
     /// Dispose the RPLIDAR Driver Instance specified by the drv parameter
     /// Applications should invoke this interface when the driver instance is no longer used in order to free memory
@@ -79,16 +77,18 @@ public:
 
     /// Open the specified serial port and connect to a target RPLIDAR device
     ///
-    /// \param port_path     the device path of the serial port 
-    ///        e.g. on Windows, it may be com3 or \\.\com10 
-    ///             on Unix-Like OS, it may be /dev/ttyS1, /dev/ttyUSB2, etc
+    /// \param uartNum       the specific uart controller (uart_num) used on the board
+    ///        e.g. on ESP32, there are 3 uart controllers 0 - 2.
     ///
     /// \param baudrate      the baudrate used
     ///        For most RPLIDAR models, the baudrate should be set to 115200
     ///
+    /// \param bufferSize    the uart rx buffer size used
+    ///        Due to the large size of data packets sent with ultra capsuled data, default buffer may be too small.
+    ///
     /// \param flag          other flags
     ///        Reserved for future use, always set to Zero
-    u_result connect(const char *path, _u32 portOrBaud, _u32 flag = 0);
+    u_result connect(_u8 uartNum, _u32 baudrate = RPLIDAR_SERIAL_BAUDRATE, _u32 bufferSize = RPLIDAR_SERIAL_SIZE_RX);
     
     /// Disconnect with the RPLIDAR and close the serial port
     void disconnect();
@@ -229,7 +229,8 @@ protected:
 
 private:
     sl_u32 _channelType;
-    IChannel* _channel;
+    HardwareSerial* _channel;
+    // IChannel* _channel;
     ILidarDriver* _lidarDrv;
     
 };

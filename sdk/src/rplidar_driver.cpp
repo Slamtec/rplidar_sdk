@@ -30,14 +30,14 @@
   *
   */
 
-#include "sdkcommon.h"
-#include "hal/abs_rxtx.h"
-#include "hal/thread.h"
+// #include "sdkcommon.h"
+// #include "hal/abs_rxtx.h"
+// #include "hal/thread.h"
 #include "hal/types.h"
 #include "hal/assert.h"
-#include "hal/locker.h"
-#include "hal/socket.h"
-#include "hal/event.h"
+// #include "hal/locker.h"
+// #include "hal/socket.h"
+// #include "hal/event.h"
 #include "rplidar_driver.h"
 #include "sl_crc.h" 
 #include <algorithm>
@@ -46,17 +46,16 @@ namespace rp { namespace standalone{ namespace rplidar {
 
     RPlidarDriver::RPlidarDriver(){}
 
-    RPlidarDriver::RPlidarDriver(sl_u32 channelType) 
-        :_channelType(channelType)
-    {
-    }
+    // RPlidarDriver::RPlidarDriver() 
+    // {
+    // }
 
     RPlidarDriver::~RPlidarDriver() {}
 
-    RPlidarDriver * RPlidarDriver::CreateDriver(_u32 drivertype)
+    RPlidarDriver * RPlidarDriver::CreateDriver()
     {
         //_channelType = drivertype;
-        return  new RPlidarDriver(drivertype);
+        return  new RPlidarDriver();
     }
 
     void RPlidarDriver::DisposeDriver(RPlidarDriver * drv)
@@ -64,27 +63,16 @@ namespace rp { namespace standalone{ namespace rplidar {
         delete drv;
     }
 
-    u_result RPlidarDriver::connect(const char *path, _u32 portOrBaud, _u32 flag)
+    u_result RPlidarDriver::connect(_u8 uartNum, _u32 baudrate, _u32 bufferSize)
     {
-        switch (_channelType)
-        {
-        case CHANNEL_TYPE_SERIALPORT:
-            _channel = (*createSerialPortChannel(path, portOrBaud));
-            break;
-        case CHANNEL_TYPE_TCP:
-            _channel = *createTcpChannel(path, portOrBaud);
-            break;
-        case CHANNEL_TYPE_UDP:
-            _channel = *createUdpChannel(path, portOrBaud);
-            break;
-        }
-        if (!(bool)_channel) return SL_RESULT_OPERATION_FAIL;
-        
         _lidarDrv = *createLidarDriver();
+        HardwareSerial _channel(uartNum);
 
         if (!(bool)_lidarDrv) return SL_RESULT_OPERATION_FAIL;
+        _channel.setRxBufferSize(bufferSize);
+        _channel.begin(baudrate);
 
-        sl_result ans =(_lidarDrv)->connect(_channel);
+        sl_result ans =(_lidarDrv)->connect(&_channel);
         return ans;
     }
 
