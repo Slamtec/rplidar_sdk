@@ -19,3 +19,5 @@
 
 // RPLidar Scan Task Stack Allocations (prob less big cash money memory )
 #define RPLIDAR_SCAN_TASK_STACK_SIZE    ( configMINIMAL_STACK_SIZE * 50 )
+
+#define RPLIDAR_SCAN_TASK_CORE 1

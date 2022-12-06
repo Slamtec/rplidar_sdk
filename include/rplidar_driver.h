@@ -39,6 +39,16 @@
 #error "The RPlidar SDK requires a C++ compiler to be built"
 #endif
 
+// Event bits for controlling rplidar task
+// Reset LiDAR.
+#define EVT_RPLIDAR_RESET 1<<0
+// Start LiDAR.
+#define EVT_RPLIDAR_START 1<<1
+// Stop LiDAR.
+#define EVT_RPLIDAR_STOP  1<<2
+
+// All event bits together... the full group...
+#define EVT_RPLIDAR_GROUP ( EVT_RPLIDAR_RESET | EVT_RPLIDAR_START | EVT_RPLIDAR_STOP )
 
 namespace rp { namespace standalone{ namespace rplidar {
     using namespace sl;
@@ -77,8 +87,8 @@ public:
 
     /// Open the specified serial port and connect to a target RPLIDAR device
     ///
-    /// \param uartNum       the specific uart controller (uart_num) used on the board
-    ///        e.g. on ESP32, there are 3 uart controllers 0 - 2.
+    /// \param serial       the specific UNINITIALISED HardwareSerial connection used on the board
+    ///        e.g. on ESP32, there are 3 serial channels 0 - 2.
     ///
     /// \param baudrate      the baudrate used
     ///        For most RPLIDAR models, the baudrate should be set to 115200
@@ -88,7 +98,7 @@ public:
     ///
     /// \param flag          other flags
     ///        Reserved for future use, always set to Zero
-    u_result connect(_u8 uartNum, _u32 baudrate = RPLIDAR_SERIAL_BAUDRATE, _u32 bufferSize = RPLIDAR_SERIAL_SIZE_RX);
+    u_result connect(HardwareSerial* serial, _u32 baudrate = RPLIDAR_SERIAL_BAUDRATE, _u32 bufferSize = RPLIDAR_SERIAL_SIZE_RX);
     
     /// Disconnect with the RPLIDAR and close the serial port
     void disconnect();
@@ -225,7 +235,7 @@ public:
 
     virtual ~RPlidarDriver();
 protected:
-    RPlidarDriver();
+    // RPlidarDriver();
 
 private:
     sl_u32 _channelType;

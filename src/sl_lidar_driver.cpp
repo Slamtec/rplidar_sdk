@@ -36,6 +36,7 @@
 #include "freertos/semphr.h"
 #include "hal/util.h"
 #include "sl_lidar_driver.h"
+#include "rplidar_config.h"
 #include "sl_crc.h" 
 #include <algorithm>
 #include <string.h>
@@ -1217,13 +1218,17 @@ namespace sl {
             return SL_RESULT_OK;
         }
 
-        void _scanTaskWrapper(void* _this) {
-            static_cast<SlamtecLidarDriver*>(_this)->task();
+        static void _scanTaskWrapper(void* _this) {
+            static_cast<SlamtecLidarDriver*>(_this)->scanTask();
         }
 
         void _createScanTask(rplidar_scan_cache scan) {
             _scan_type = scan;
-            xTaskCreatePinnedToCore(this->_scanTaskWrapper, "Task", 2048, this, _taskPriority, NULL, _taskCore);
+            xTaskCreatePinnedToCore(this->_scanTaskWrapper, "Task", RPLIDAR_SCAN_TASK_STACK_SIZE, this, RPLIDAR_SCAN_TASK_PRIORITY, NULL, RPLIDAR_SCAN_TASK_CORE);
+        }
+
+        void scanTask() {
+
         }
 
         // void AIFreeRTOS::startTaskImpl(void* _this)
