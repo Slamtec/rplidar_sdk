@@ -5,11 +5,12 @@
 // Bunch o' dirty global variables - pls no blame me i hate it as much as you
 
 // some cheeky globals for processing the scan
-// sl_lidar_response_measurement_node_t      LOCAL_BUF[LOCAL_BUFFER_SIZE];
-// sl_lidar_response_measurement_node_hq_t   LOCAL_SCAN[MAX_SCAN_NODES];
+sl_lidar_response_measurement_node_t      LOCAL_BUF[LOCAL_BUFFER_SIZE];
+sl_lidar_response_measurement_node_hq_t   LOCAL_SCAN[MAX_SCAN_NODES];
 
 sl_lidar_response_measurement_node_hq_t          LOCAL_BUF_HQ[LOCAL_BUFFER_SIZE];
 sl_lidar_response_measurement_node_hq_t          LOCAL_SCAN_HQ[MAX_SCAN_NODES];
+
 size_t                                           LOCAL_COUNT = LOCAL_BUFFER_SIZE;
 size_t                                           LOCAL_SCAN_COUNT = 0;
 
@@ -38,9 +39,9 @@ bool                                         _is_previous_HqdataRdy;
 rplidar_scan_cache SCAN_CACHE_TYPE = CACHE_SCAN_DATA;
 
 // yucky global variables controlling lidar scan and communication
-HardwareSerial * _channel = NULL;
-bool _isConnected = false;
-bool _isScanning = false;
+// HardwareSerial * _channel = NULL;
+// bool _isConnected = false;
+// bool _isScanning = false;
 
 // internal sync of lidar buffer
 bool _scan_node_synced = false;
@@ -53,12 +54,8 @@ SemaphoreHandle_t lidarLock = NULL;
 using namespace sl;
 
 
-uint32_t getms() {
-    return esp_timer_get_time() / 1000;
-}
-
 bool waitForData(HardwareSerial* serial, size_t size, sl_u32 timeoutInMs, size_t* actualReady) {
-    sl_u32 startTs = getms();
+    sl_u32 startTs = millis();
     size_t bytesReady;
     
     // wait timeout (-1 for forever)

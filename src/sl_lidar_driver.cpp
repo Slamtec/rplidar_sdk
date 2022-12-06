@@ -180,17 +180,14 @@ namespace sl {
 
     public:
         SlamtecLidarDriver()
-            // : _channel(NULL)
-            // , _isConnected(false)
-            // , _isScanning(false)
-            : _isSupportingMotorCtrl(MotorCtrlSupportNone)
+            : _channel(NULL)
+            , _isConnected(false)
+            , _isScanning(false)
+            , _isSupportingMotorCtrl(MotorCtrlSupportNone)
             , _cached_sampleduration_std(LEGACY_SAMPLE_DURATION)
             , _cached_sampleduration_express(LEGACY_SAMPLE_DURATION)
 
         {
-            _channel = NULL;
-            _isConnected = false;
-            _isScanning = false;
             _cached_scan_node_hq_count = 0;
             // _cached_scan_node_hq_count_for_interval_retrieve = 0;
         }
@@ -1224,10 +1221,56 @@ namespace sl {
 
         void _createScanTask(rplidar_scan_cache scan) {
             _scan_type = scan;
-            xTaskCreatePinnedToCore(this->_scanTaskWrapper, "Task", RPLIDAR_SCAN_TASK_STACK_SIZE, this, RPLIDAR_SCAN_TASK_PRIORITY, NULL, RPLIDAR_SCAN_TASK_CORE);
+            xTaskCreatePinnedToCore(this->_scanTaskWrapper, "RPLIDAR_SCAN", RPLIDAR_SCAN_TASK_STACK_SIZE, this, RPLIDAR_SCAN_TASK_PRIORITY, NULL, RPLIDAR_SCAN_TASK_CORE);
         }
 
         void scanTask() {
+            Result<nullptr_t> ans = SL_RESULT_OK;
+            _local_count = LOCAL_BUFFER_SIZE;
+            _local_scan_count = 0;
+            // always discard the first data since it may be incomplete, hence the calls to wait functions
+            // assign function pointer for cache
+            sl_result (*cacheLidarData)(void);
+            switch (SCAN_CACHE_TYPE) {
+                case CACHE_SCAN_DATA:
+                    _waitScanData(_local_measurement_buffer, _local_count);
+                    cacheLidarData = &_cacheScanData;
+                    break;
+                case CACHE_CAPSULED_SCAN_DATA:
+                    _waitCapsuledNode(_local_capsule_node);
+                    cacheLidarData = &_cacheCapsuledScanData;
+                    break;
+                case CACHE_HQ_SCAN_DATA:
+                    _waitHqNode(_local_hq_node);
+                    cacheLidarData = &_cacheHqScanData;
+                    break;
+                case CACHE_ULTRA_CAPSULED_SCAN_DATA:
+                    _waitUltraCapsuledNode(_local_ultra_capsule_node);
+                    cacheLidarData = &_cacheUltraCapsuledScanData;
+                    break;
+                // uh oh
+                default:
+                    // spaghettio
+                    break;
+            }
+
+            for (;;) {
+                // break once turned off
+                if (!_isScanning) {
+                    Serial.printf("SCAN TERMINATING - TURNED OFF EXTERNALLY\n");
+                    break;
+                }
+                // function pointer funtimes
+                if (!(ans = (*cacheLidarData)())) {
+                    Serial.printf("FAILED SCAN WITH ERR: %d\n", ans);
+                    break;
+                    // _isScanning = false;
+                    // vTaskDelete(NULL);
+                }
+                delay(RPLIDAR_SCAN_DELAY);
+            }
+            _isScanning = false;
+            vTaskDelete(NULL);
 
         }
 
@@ -1247,28 +1290,42 @@ namespace sl {
     private:
         
         MotorCtrlSupport        _isSupportingMotorCtrl;
+        bool _isConnected;
+        bool _isScanning;
+
+        HardwareSerial* _channel;
         
-        // rp::hal::Locker         _lock;
-        // rp::hal::Event          _dataEvt;
-        // rp::hal::Thread         _cachethread;
+        TaskHandle_t RPLidarScanTaskHandle = NULL;
+        EventGroupHandle_t RPLidarScanEventGroup = NULL;
+        SemaphoreHandle_t lidarLock = NULL;
         sl_u16                  _cached_sampleduration_std;
         sl_u16                  _cached_sampleduration_express;
         // bool                    _scan_node_synced;
         rplidar_scan_cache      _scan_type;
 
-        // sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf[RPLIDAR_BUFFER_SIZE];
-        // size_t                                   _cached_scan_node_hq_count;
-        // sl_u8                                    _cached_capsule_flag;
+        sl_lidar_response_measurement_node_t             _local_measurement_buffer[LOCAL_BUFFER_SIZE];
+        sl_lidar_response_measurement_node_hq_t          _local_measurement_buffer_hq[LOCAL_BUFFER_SIZE];
+        sl_lidar_response_measurement_node_hq_t          _local_scan_node_buffer_hq[MAX_SCAN_NODES];
+        size_t                                           _local_count = LOCAL_BUFFER_SIZE;
+        size_t                                           _local_scan_count = 0;
 
-        // sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf_for_interval_retrieve[RPLIDAR_BUFFER_SIZE];
-        // size_t                                   _cached_scan_node_hq_count_for_interval_retrieve;
+        sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf[RPLIDAR_BUFFER_SIZE];
+        size_t                                   _cached_scan_node_hq_count;
+        sl_u8                                    _cached_capsule_flag;
 
-        // sl_lidar_response_capsule_measurement_nodes_t       _cached_previous_capsuledata;
-        // sl_lidar_response_dense_capsule_measurement_nodes_t _cached_previous_dense_capsuledata;
-        // sl_lidar_response_ultra_capsule_measurement_nodes_t _cached_previous_ultracapsuledata;
-        // sl_lidar_response_hq_capsule_measurement_nodes_t _cached_previous_Hqdata;
-        // bool                                         _is_previous_capsuledataRdy;
-        // bool                                         _is_previous_HqdataRdy;
+        sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf_for_interval_retrieve[RPLIDAR_BUFFER_SIZE];
+        size_t                                   _cached_scan_node_hq_count_for_interval_retrieve;
+
+        sl_lidar_response_capsule_measurement_nodes_t       _cached_previous_capsuledata;
+        sl_lidar_response_dense_capsule_measurement_nodes_t _cached_previous_dense_capsuledata;
+        sl_lidar_response_ultra_capsule_measurement_nodes_t _cached_previous_ultracapsuledata;
+        sl_lidar_response_hq_capsule_measurement_nodes_t _cached_previous_Hqdata;
+        bool                                         _is_previous_capsuledataRdy;
+        bool                                         _is_previous_HqdataRdy;
+
+        sl_lidar_response_capsule_measurement_nodes_t          _local_capsule_node;
+        sl_lidar_response_hq_capsule_measurement_nodes_t       _local_hq_node;
+        sl_lidar_response_ultra_capsule_measurement_nodes_t    _local_ultra_capsule_node;
     };
 
     Result<ILidarDriver*> createLidarDriver()

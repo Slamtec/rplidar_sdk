@@ -7,6 +7,7 @@
 #define RPLIDAR_BUFFER_SIZE     1400
 #define DEFAULT_TIMEOUT         2000
 #define MAX_SCAN_NODES          RPLIDAR_BUFFER_SIZE
+#define LOCAL_BUFFER_SIZE       256
 
 // RPLidar Task Priorities
 #define RPLIDAR_TASK_PRIORITY    ( tskIDLE_PRIORITY + 3 )
