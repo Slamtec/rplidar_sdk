@@ -1611,7 +1611,7 @@ namespace sl {
             // _waitCapsuledNode(capsule_node); // // always discard the first data since it may be incomplete
 
             Result<nullptr_t> ans = SL_RESULT_OK;  
-            ans = _waitCapsuledNode(capsule_node);
+            ans = _waitCapsuledNode(_local_capsule_node);
             if (!ans) {
                 if ((sl_result)ans != SL_RESULT_OPERATION_TIMEOUT && (sl_result)ans != SL_RESULT_INVALID_DATA) {
                     return SL_RESULT_OPERATION_FAIL;
@@ -1623,10 +1623,10 @@ namespace sl {
             }
             switch (_cached_capsule_flag) {
             case NORMAL_CAPSULE:
-                _capsuleToNormal(capsule_node, LOCAL_BUF_HQ, LOCAL_COUNT);
+                _capsuleToNormal(_local_capsule_node, LOCAL_BUF_HQ, LOCAL_COUNT);
                 break;
             case DENSE_CAPSULE:
-                _dense_capsuleToNormal(capsule_node, LOCAL_BUF_HQ, LOCAL_COUNT);
+                _dense_capsuleToNormal(_local_capsule_node, LOCAL_BUF_HQ, LOCAL_COUNT);
                 break;
             }
             //
@@ -2176,6 +2176,7 @@ namespace sl {
         size_t                                           _local_count = LOCAL_BUFFER_SIZE;
         size_t                                           _local_scan_count = 0;
 
+        // complete rotation of scan data from the previous rotation
         sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf[RPLIDAR_BUFFER_SIZE];
         size_t                                   _cached_scan_node_hq_count;
         sl_u8                                    _cached_capsule_flag;
@@ -2183,13 +2184,15 @@ namespace sl {
         sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf_for_interval_retrieve[RPLIDAR_BUFFER_SIZE];
         size_t                                   _cached_scan_node_hq_count_for_interval_retrieve;
 
+        // previous incoming scan data used to process current scan data
         sl_lidar_response_capsule_measurement_nodes_t       _cached_previous_capsuledata;
         sl_lidar_response_dense_capsule_measurement_nodes_t _cached_previous_dense_capsuledata;
         sl_lidar_response_ultra_capsule_measurement_nodes_t _cached_previous_ultracapsuledata;
-        sl_lidar_response_hq_capsule_measurement_nodes_t _cached_previous_Hqdata;
-        bool                                         _is_previous_capsuledataRdy;
-        bool                                         _is_previous_HqdataRdy;
+        sl_lidar_response_hq_capsule_measurement_nodes_t    _cached_previous_Hqdata;
+        bool                                                _is_previous_capsuledataRdy;
+        bool                                                _is_previous_HqdataRdy;
 
+        // incoming single scan data to be processed
         sl_lidar_response_capsule_measurement_nodes_t          _local_capsule_node;
         sl_lidar_response_hq_capsule_measurement_nodes_t       _local_hq_node;
         sl_lidar_response_ultra_capsule_measurement_nodes_t    _local_ultra_capsule_node;
