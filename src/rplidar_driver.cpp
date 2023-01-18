@@ -63,16 +63,16 @@ namespace rp { namespace standalone{ namespace rplidar {
         delete drv;
     }
 
-    u_result RPlidarDriver::connect(_u8 uartNum, _u32 baudrate, _u32 bufferSize)
+    u_result RPlidarDriver::connect(HardwareSerial* serial, _u32 baudrate, _u32 bufferSize)
     {
         _lidarDrv = *createLidarDriver();
-        HardwareSerial _channel(uartNum);
+        _channel = serial;
 
         if (!(bool)_lidarDrv) return SL_RESULT_OPERATION_FAIL;
-        _channel.setRxBufferSize(bufferSize);
-        _channel.begin(baudrate);
+        _channel->setRxBufferSize(bufferSize);
+        _channel->begin(baudrate);
 
-        sl_result ans =(_lidarDrv)->connect(&_channel);
+        sl_result ans =(_lidarDrv)->connect(_channel);
         return ans;
     }
 
