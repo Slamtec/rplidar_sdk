@@ -43,7 +43,18 @@
 
 #include <Arduino.h>
 
+#define NORMAL_CAPSULE          0
+#define DENSE_CAPSULE           1
 
+#define LIDAR_TIMEOUT 10
+
+#define RPLIDAR_SCAN_DELAY 0
+
+// Event bits for controlling rplidar task
+// LiDAR scan complete.
+#define EVT_RPLIDAR_SCAN_COMPLETE 1<<0
+// All event bits together... the full group...
+#define EVT_RPLIDAR_SCAN_GROUP ( EVT_RPLIDAR_SCAN_COMPLETE )
 
 namespace sl {
 
@@ -67,6 +78,52 @@ namespace sl {
         // The name of scan mode (padding with 0 if less than 64 characters)
         char    scan_mode[64];
     };
+
+    template <typename T>
+    struct Result
+    {
+        sl_result err;
+        T value;
+        Result(const T& value)
+            : err(SL_RESULT_OK)
+            , value(value)
+        {
+        }
+
+        Result(sl_result err)
+            : err(err)
+            , value()
+        {
+        }
+
+        operator sl_result() const
+        {
+            return err;
+        }
+
+        operator bool() const
+        {
+            return SL_IS_OK(err);
+        }
+
+        T& operator* ()
+        {
+            return value;
+        }
+
+        T* operator-> ()
+        {
+            return &value;
+        }
+    };
+
+    // scan types for scan function
+    typedef enum rplidar_scan_cache {
+        CACHE_SCAN_DATA,
+        CACHE_CAPSULED_SCAN_DATA,
+        CACHE_HQ_SCAN_DATA,
+        CACHE_ULTRA_CAPSULED_SCAN_DATA
+    } rplidar_scan_cache;
 
     enum MotorCtrlSupport
     {

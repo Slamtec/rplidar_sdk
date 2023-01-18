@@ -405,7 +405,7 @@ namespace sl {
                     return SL_RESULT_INVALID_DATA;
                 }
                 _isScanning = true;
-                rplidar_scan_task_init(CACHE_SCAN_DATA);
+                _createScanTask(CACHE_SCAN_DATA);
                 // _cachethread = CLASS_THREAD(SlamtecLidarDriver, _cacheScanData);
                 // if (_cachethread.getHandle() == 0) {
                 //     return SL_RESULT_OPERATION_FAIL;
@@ -527,7 +527,7 @@ namespace sl {
                     }
                     _cached_capsule_flag = NORMAL_CAPSULE;
                     _isScanning = true;
-                    rplidar_scan_task_init(CACHE_CAPSULED_SCAN_DATA);
+                    _createScanTask(CACHE_CAPSULED_SCAN_DATA);
                     // _cachethread = CLASS_THREAD(SlamtecLidarDriver, _cacheCapsuledScanData);
                 }
                 else if (scanAnsType == SL_LIDAR_ANS_TYPE_MEASUREMENT_DENSE_CAPSULED) {
@@ -536,7 +536,7 @@ namespace sl {
                     }
                     _cached_capsule_flag = DENSE_CAPSULE;
                     _isScanning = true;
-                    rplidar_scan_task_init(CACHE_CAPSULED_SCAN_DATA);
+                    _createScanTask(CACHE_CAPSULED_SCAN_DATA);
                     // _cachethread = CLASS_THREAD(SlamtecLidarDriver, _cacheCapsuledScanData);
                 }
                 else if (scanAnsType == SL_LIDAR_ANS_TYPE_MEASUREMENT_HQ) {
@@ -544,7 +544,7 @@ namespace sl {
                         return SL_RESULT_INVALID_DATA;
                     }
                     _isScanning = true;
-                    rplidar_scan_task_init(CACHE_HQ_SCAN_DATA);
+                    _createScanTask(CACHE_HQ_SCAN_DATA);
                     // _cachethread = CLASS_THREAD(SlamtecLidarDriver, _cacheHqScanData);
                 }
                 else {
@@ -552,7 +552,7 @@ namespace sl {
                         return SL_RESULT_INVALID_DATA;
                     }
                     _isScanning = true;
-                    rplidar_scan_task_init(CACHE_ULTRA_CAPSULED_SCAN_DATA);
+                    _createScanTask(CACHE_ULTRA_CAPSULED_SCAN_DATA);
                     // _cachethread = CLASS_THREAD(SlamtecLidarDriver, _cacheUltraCapsuledScanData);
                 }
                 return SL_RESULT_OK;
@@ -1091,9 +1091,9 @@ namespace sl {
 
         //         memset(magicByteSeq, SL_LIDAR_AUTOBAUD_MAGICBYTE, sizeof(magicByteSeq));
 
-        //         sl_u64 startTS = getms();
+        //         sl_u64 startTS = millis();
 
-        //         while (getms() - startTS < 1500 ) //lasting for 1.5sec
+        //         while (millis() - startTS < 1500 ) //lasting for 1.5sec
         //         {
         //             if (_channel->write(magicByteSeq, sizeof(magicByteSeq)) < 0)
         //             {
@@ -1140,7 +1140,7 @@ namespace sl {
             size_t bytesReady;
             
             // wait timeout (-1 for forever)
-            while (timeoutInMs == -1 || (getms() - startTs) <= timeoutInMs) {
+            while (timeoutInMs == -1 || (millis() - startTs) <= timeoutInMs) {
                 // wait for total bytes to be ready
                 if ((bytesReady = serial->available()) < size) {
                     // Serial.printf("%d / %d bytes ready\n", bytesReady, size);
@@ -1166,12 +1166,12 @@ namespace sl {
         sl_result _waitNode(sl_lidar_response_measurement_node_t * node, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
             int  recvPos = 0;
-            sl_u32 startTs = getms();
+            sl_u32 startTs = millis();
             sl_u8  recvBuffer[sizeof(sl_lidar_response_measurement_node_t)];
             sl_u8 *nodeBuffer = (sl_u8*)node;
             sl_u32 waitTime;
 
-            while ((waitTime = getms() - startTs) <= timeout) {
+            while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_response_measurement_node_t) - recvPos;
                 size_t recvSize;
 
@@ -1228,11 +1228,11 @@ namespace sl {
             }
 
             size_t   recvNodeCount = 0;
-            sl_u32     startTs = getms();
+            sl_u32     startTs = millis();
             sl_u32     waitTime;
             Result<nullptr_t> ans = SL_RESULT_OK;
 
-            while ((waitTime = getms() - startTs) <= timeout && recvNodeCount < count) {
+            while ((waitTime = millis() - startTs) <= timeout && recvNodeCount < count) {
                 sl_lidar_response_measurement_node_t node;
                 ans = _waitNode(&node, timeout - waitTime);
                 if (!ans) return ans;
@@ -1417,11 +1417,11 @@ namespace sl {
         sl_result _waitCapsuledNode(sl_lidar_response_capsule_measurement_nodes_t & node, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
             int  recvPos = 0;
-            sl_u32 startTs = getms();
+            sl_u32 startTs = millis();
             sl_u8  recvBuffer[sizeof(sl_lidar_response_capsule_measurement_nodes_t)];
             sl_u8 *nodeBuffer = (sl_u8*)&node;
             sl_u32 waitTime;
-            while ((waitTime = getms() - startTs) <= timeout) {
+            while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_response_capsule_measurement_nodes_t) - recvPos;
                 size_t recvSize;
                 bool ans = waitForData(_channel, remainSize, timeout - waitTime, &recvSize);
@@ -1667,12 +1667,12 @@ namespace sl {
             }
 
             int  recvPos = 0;
-            sl_u32 startTs = getms();
+            sl_u32 startTs = millis();
             sl_u8  recvBuffer[sizeof(sl_lidar_response_hq_capsule_measurement_nodes_t)];
             sl_u8 *nodeBuffer = (sl_u8*)&node;
             sl_u32 waitTime;
 
-            while ((waitTime = getms() - startTs) <= timeout) {
+            while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_response_hq_capsule_measurement_nodes_t) - recvPos;
                 size_t recvSize;
 
@@ -1801,12 +1801,12 @@ namespace sl {
             }
 
             int  recvPos = 0;
-            sl_u32 startTs = getms();
+            sl_u32 startTs = millis();
             sl_u8  recvBuffer[sizeof(sl_lidar_response_ultra_capsule_measurement_nodes_t)];
             sl_u8 *nodeBuffer = (sl_u8*)&node;
             sl_u32 waitTime;
 
-            while ((waitTime = getms() - startTs) <= timeout) {
+            while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_response_ultra_capsule_measurement_nodes_t) - recvPos;
                 size_t recvSize;
 
@@ -1978,12 +1978,12 @@ namespace sl {
         sl_result _waitResponseHeader(sl_lidar_ans_header_t * header, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
             int  recvPos = 0;
-            sl_u32 startTs = getms();
+            sl_u32 startTs = millis();
             sl_u8  recvBuffer[sizeof(sl_lidar_ans_header_t)];
             sl_u8  *headerBuffer = reinterpret_cast<sl_u8 *>(header);
             sl_u32 waitTime;
 
-            while ((waitTime = getms() - startTs) <= timeout) {
+            while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_ans_header_t) - recvPos;
                 size_t recvSize;
 
@@ -2085,7 +2085,7 @@ namespace sl {
             // always discard the first data since it may be incomplete, hence the calls to wait functions
             // assign function pointer for cache
             sl_result (SlamtecLidarDriver::*cacheLidarData)(void);
-            switch (SCAN_CACHE_TYPE) {
+            switch (_scan_type) {
                 case CACHE_SCAN_DATA:
                     _waitScanData(_local_measurement_buffer, _local_count);
                     cacheLidarData = &SlamtecLidarDriver::_cacheScanData;
