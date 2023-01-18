@@ -32,6 +32,7 @@
 #pragma once
 
 
+#include <Arduino.h>
 #include <vector>
 #include <map>
 #include <string>
@@ -39,15 +40,12 @@
 #include "sl_lidar_cmd.h"
 #include "rplidar_scan.h"
 #include "rplidar_cmd.h"
-#include <string>
-
-#include <Arduino.h>
+#include "rplidar_config.h"
 
 #define NORMAL_CAPSULE          0
 #define DENSE_CAPSULE           1
 
 #define LIDAR_TIMEOUT 10
-
 #define RPLIDAR_SCAN_DELAY 0
 
 // Event bits for controlling rplidar task
