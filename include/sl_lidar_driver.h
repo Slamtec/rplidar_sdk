@@ -38,7 +38,6 @@
 #include <string>
 
 #include "sl_lidar_cmd.h"
-#include "rplidar_scan.h"
 #include "rplidar_cmd.h"
 #include "rplidar_config.h"
 
