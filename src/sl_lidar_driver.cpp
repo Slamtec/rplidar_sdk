@@ -2100,23 +2100,23 @@ namespace sl {
             _local_scan_count = 0;
             // always discard the first data since it may be incomplete, hence the calls to wait functions
             // assign function pointer for cache
-            sl_result (sl::SlamtecLidarDriver::*cacheLidarData)(void);
+            sl_result (SlamtecLidarDriver::*cacheLidarData)(void);
             switch (SCAN_CACHE_TYPE) {
                 case CACHE_SCAN_DATA:
                     _waitScanData(_local_measurement_buffer, _local_count);
-                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheScanData;
+                    cacheLidarData = &SlamtecLidarDriver::_cacheScanData;
                     break;
                 case CACHE_CAPSULED_SCAN_DATA:
                     _waitCapsuledNode(_local_capsule_node);
-                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheCapsuledScanData;
+                    cacheLidarData = &SlamtecLidarDriver::_cacheCapsuledScanData;
                     break;
                 case CACHE_HQ_SCAN_DATA:
                     _waitHqNode(_local_hq_node);
-                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheHqScanData;
+                    cacheLidarData = &SlamtecLidarDriver::_cacheHqScanData;
                     break;
                 case CACHE_ULTRA_CAPSULED_SCAN_DATA:
                     _waitUltraCapsuledNode(_local_ultra_capsule_node);
-                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheUltraCapsuledScanData;
+                    cacheLidarData = &SlamtecLidarDriver::_cacheUltraCapsuledScanData;
                     break;
                 // uh oh
                 default:
@@ -2131,7 +2131,7 @@ namespace sl {
                     break;
                 }
                 // function pointer funtimes
-                if (!(ans = (*cacheLidarData)())) {
+                if (!(ans = ((*this).*cacheLidarData)())) {
                     Serial.printf("FAILED SCAN WITH ERR: %d\n", ans);
                     break;
                     // _isScanning = false;
