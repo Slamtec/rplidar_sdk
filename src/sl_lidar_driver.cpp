@@ -1624,7 +1624,7 @@ namespace sl {
                 _dense_capsuleToNormal(_local_capsule_node, _local_measurement_buffer_hq, _local_count);
                 break;
             }
-            
+
             for (size_t pos = 0; pos < _local_count; ++pos) {
                 if (_local_measurement_buffer_hq[pos].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT) {
                     // only publish the data when it contains a full 360 degree scan 
@@ -1746,15 +1746,8 @@ namespace sl {
 
         sl_result _cacheHqScanData()
         {
-            // sl_lidar_response_hq_capsule_measurement_nodes_t    hq_node;
-            // sl_lidar_response_measurement_node_hq_t   local_buf[LOCAL_BUFFER_SIZE];
-            // size_t                                   count = LOCAL_BUFFER_SIZE;
-            // sl_lidar_response_measurement_node_hq_t   local_scan[MAX_SCAN_NODES];
-            // size_t                                   scan_count = 0;
             Result<nullptr_t> ans = SL_RESULT_OK;
-            // memset(local_scan, 0, sizeof(local_scan));
-            // _waitHqNode(hq_node);
-            ans = _waitHqNode(hq_node);
+            ans = _waitHqNode(_local_hq_node);
             if (!ans) {
                 if ((sl_result)ans != SL_RESULT_OPERATION_TIMEOUT && (sl_result)ans != SL_RESULT_INVALID_DATA) {
                     return SL_RESULT_OPERATION_FAIL;
@@ -1765,14 +1758,14 @@ namespace sl {
                 }
             }
 
-            _HqToNormal(hq_node, LOCAL_BUF_HQ, LOCAL_COUNT);
-            for (size_t pos = 0; pos < LOCAL_COUNT; ++pos){
-                if (LOCAL_BUF_HQ[pos].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT){
+            _HqToNormal(_local_hq_node, _local_measurement_buffer_hq, _local_count);
+            for (size_t pos = 0; pos < _local_count; ++pos){
+                if (_local_measurement_buffer_hq[pos].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT){
                     // only publish the data when it contains a full 360 degree scan 
-                    if ((LOCAL_SCAN_HQ[0].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
+                    if ((_local_scan_node_buffer_hq[0].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
                         if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
-                            memcpy(_cached_scan_node_hq_buf, LOCAL_SCAN_HQ, LOCAL_SCAN_COUNT * sizeof(sl_lidar_response_measurement_node_hq_t));
-                            _cached_scan_node_hq_count = LOCAL_SCAN_COUNT;
+                            memcpy(_cached_scan_node_hq_buf, _local_scan_node_buffer_hq, _local_scan_count * sizeof(sl_lidar_response_measurement_node_hq_t));
+                            _cached_scan_node_hq_count = _local_scan_count;
                             xEventGroupSetBits(RPLidarScanEventGroup, EVT_RPLIDAR_SCAN_COMPLETE);
 
                             xSemaphoreGive(lidarLock);
@@ -1781,11 +1774,11 @@ namespace sl {
                             ;
                         }
                     }
-                    LOCAL_SCAN_COUNT = 0;
+                    _local_scan_count = 0;
                 }
-                LOCAL_SCAN_HQ[LOCAL_SCAN_COUNT++] = LOCAL_BUF_HQ[pos];
-                if (LOCAL_SCAN_COUNT == _countof(LOCAL_SCAN_HQ)) {
-                    LOCAL_SCAN_COUNT -= 1; // prevent overflow
+                _local_scan_node_buffer_hq[_local_scan_count++] = _local_measurement_buffer_hq[pos];
+                if (_local_scan_count == _countof(_local_scan_node_buffer_hq)) {
+                    _local_scan_count -= 1; // prevent overflow
                 }
                                                                             //for interval retrieve
                 // if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
@@ -1890,7 +1883,7 @@ namespace sl {
         sl_result _cacheUltraCapsuledScanData()
         {
             Result<nullptr_t> ans = SL_RESULT_OK;
-            ans = _waitUltraCapsuledNode(ultra_capsule_node);
+            ans = _waitUltraCapsuledNode(_local_ultra_capsule_node);
             if (!ans) {
                 Serial.printf("Bad data acquired by scan\n");
                 if ((sl_result)ans != SL_RESULT_OPERATION_TIMEOUT && (sl_result)ans != SL_RESULT_INVALID_DATA) {
@@ -1904,16 +1897,16 @@ namespace sl {
                 }
             }
 
-            _ultraCapsuleToNormal(ultra_capsule_node, LOCAL_BUF_HQ, LOCAL_COUNT);
+            _ultraCapsuleToNormal(_local_ultra_capsule_node, _local_measurement_buffer_hq, _local_count);
 
-            for (size_t pos = 0; pos < LOCAL_COUNT; ++pos) {
-                if (LOCAL_BUF_HQ[pos].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+            for (size_t pos = 0; pos < _local_count; ++pos) {
+                if (_local_measurement_buffer_hq[pos].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT) {
                     // only publish the data when it contains a full 360 degree scan 
 
-                    if ((LOCAL_SCAN_HQ[0].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
+                    if ((_local_scan_node_buffer_hq[0].flag & SL_LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
                         if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
-                            memcpy(_cached_scan_node_hq_buf, LOCAL_SCAN_HQ, LOCAL_SCAN_COUNT * sizeof(sl_lidar_response_measurement_node_hq_t));
-                            _cached_scan_node_hq_count = LOCAL_SCAN_COUNT;
+                            memcpy(_cached_scan_node_hq_buf, _local_scan_node_buffer_hq, _local_scan_count * sizeof(sl_lidar_response_measurement_node_hq_t));
+                            _cached_scan_node_hq_count = _local_scan_count;
                             xEventGroupSetBits(RPLidarScanEventGroup, EVT_RPLIDAR_SCAN_COMPLETE);
                             xSemaphoreGive(lidarLock);
                         } else {
@@ -1922,11 +1915,11 @@ namespace sl {
                             ;
                         }
                     }
-                    LOCAL_SCAN_COUNT = 0;
+                    _local_scan_count = 0;
                 }
-                LOCAL_SCAN_HQ[LOCAL_SCAN_COUNT++] = LOCAL_BUF_HQ[pos];
-                if (LOCAL_SCAN_COUNT == _countof(LOCAL_SCAN_HQ)) {
-                    LOCAL_SCAN_COUNT -= 1; // prevent overflow
+                _local_scan_node_buffer_hq[_local_scan_count++] = _local_measurement_buffer_hq[pos];
+                if (_local_scan_count == _countof(_local_scan_node_buffer_hq)) {
+                    _local_scan_count -= 1; // prevent overflow
                 }
 
                 //for interval retrieve
