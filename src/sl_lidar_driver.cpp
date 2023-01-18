@@ -237,6 +237,9 @@ namespace sl {
             , _isSupportingMotorCtrl(MotorCtrlSupportNone)
             , _cached_sampleduration_std(LEGACY_SAMPLE_DURATION)
             , _cached_sampleduration_express(LEGACY_SAMPLE_DURATION)
+            , RPLidarScanTaskHandle(NULL)
+            , RPLidarScanEventGroup(NULL)
+            , lidarLock(NULL)
 
         {
             _cached_scan_node_hq_count = 0;
@@ -2097,23 +2100,23 @@ namespace sl {
             _local_scan_count = 0;
             // always discard the first data since it may be incomplete, hence the calls to wait functions
             // assign function pointer for cache
-            sl_result (*cacheLidarData)(void);
+            sl_result (sl::SlamtecLidarDriver::*cacheLidarData)(void);
             switch (SCAN_CACHE_TYPE) {
                 case CACHE_SCAN_DATA:
                     _waitScanData(_local_measurement_buffer, _local_count);
-                    cacheLidarData = &_cacheScanData;
+                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheScanData;
                     break;
                 case CACHE_CAPSULED_SCAN_DATA:
                     _waitCapsuledNode(_local_capsule_node);
-                    cacheLidarData = &_cacheCapsuledScanData;
+                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheCapsuledScanData;
                     break;
                 case CACHE_HQ_SCAN_DATA:
                     _waitHqNode(_local_hq_node);
-                    cacheLidarData = &_cacheHqScanData;
+                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheHqScanData;
                     break;
                 case CACHE_ULTRA_CAPSULED_SCAN_DATA:
                     _waitUltraCapsuledNode(_local_ultra_capsule_node);
-                    cacheLidarData = &_cacheUltraCapsuledScanData;
+                    cacheLidarData = &sl::SlamtecLidarDriver::_cacheUltraCapsuledScanData;
                     break;
                 // uh oh
                 default:
@@ -2141,19 +2144,6 @@ namespace sl {
 
         }
 
-        // void AIFreeRTOS::startTaskImpl(void* _this)
-        // {
-        //   static_cast<AIFreeRTOS*>(_this)->task();
-        // }
-
-        // void AIFreeRTOS::startTask(void)
-        // {	
-        //  xTaskCreatePinnedToCore(this->startTaskImpl, "Task", 2048, this, _taskPriority, NULL, _taskCore);
-        // }
-
-        // void AIFreeRTOS::task(void)
-        // {	
-
     private:
         
         MotorCtrlSupport        _isSupportingMotorCtrl;
@@ -2162,12 +2152,14 @@ namespace sl {
 
         HardwareSerial* _channel;
         
-        TaskHandle_t RPLidarScanTaskHandle = NULL;
-        EventGroupHandle_t RPLidarScanEventGroup = NULL;
-        SemaphoreHandle_t lidarLock = NULL;
+        TaskHandle_t         RPLidarScanTaskHandle;
+        EventGroupHandle_t   RPLidarScanEventGroup;
+        SemaphoreHandle_t    lidarLock;
+
+
         sl_u16                  _cached_sampleduration_std;
         sl_u16                  _cached_sampleduration_express;
-        // bool                    _scan_node_synced;
+        bool                    _scan_node_synced;
         rplidar_scan_cache      _scan_type;
 
         sl_lidar_response_measurement_node_t             _local_measurement_buffer[LOCAL_BUFFER_SIZE];
@@ -2178,11 +2170,12 @@ namespace sl {
 
         // complete rotation of scan data from the previous rotation
         sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf[RPLIDAR_BUFFER_SIZE];
-        size_t                                   _cached_scan_node_hq_count;
-        sl_u8                                    _cached_capsule_flag;
+        size_t                                    _cached_scan_node_hq_count;
+        sl_u8                                     _cached_capsule_flag;
 
+        // complete rotation of scan data from the previous rotation for internal retrieval
         sl_lidar_response_measurement_node_hq_t   _cached_scan_node_hq_buf_for_interval_retrieve[RPLIDAR_BUFFER_SIZE];
-        size_t                                   _cached_scan_node_hq_count_for_interval_retrieve;
+        size_t                                    _cached_scan_node_hq_count_for_interval_retrieve;
 
         // previous incoming scan data used to process current scan data
         sl_lidar_response_capsule_measurement_nodes_t       _cached_previous_capsuledata;
