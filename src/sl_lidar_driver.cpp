@@ -238,12 +238,24 @@ namespace sl {
             , _cached_sampleduration_std(LEGACY_SAMPLE_DURATION)
             , _cached_sampleduration_express(LEGACY_SAMPLE_DURATION)
             , RPLidarScanTaskHandle(NULL)
-            , RPLidarScanEventGroup(NULL)
-            , lidarLock(NULL)
 
         {
             _cached_scan_node_hq_count = 0;
+            // Event group for communicating with scan task
+            RPLidarScanEventGroup = xEventGroupCreate();
+            // Semaphore to control communication with lidar and possesion of scan buffer
+            lidarLock = xSemaphoreCreateBinary();
+            xSemaphoreGive(lidarLock);
             // _cached_scan_node_hq_count_for_interval_retrieve = 0;
+        }
+
+        ~SlamtecLidarDriver() {
+            vSemaphoreDelete(lidarLock);
+            vEventGroupDelete(RPLidarScanEventGroup);
+            // cleanup scan task
+            // if (RPLidarScanTaskHandle != NULL) {
+
+            // }
         }
 
         sl_result connect(HardwareSerial* channel)
@@ -287,10 +299,13 @@ namespace sl {
         {
             Result<nullptr_t> ans = SL_RESULT_OK;
             bool confProtocolSupported = false;
+            printf("checking support config\n");
             ans = checkSupportConfigCommands(confProtocolSupported);
             if (!ans) return SL_RESULT_INVALID_DATA;
+            printf("support config succeeds\n");
 
             if (confProtocolSupported) {
+                printf("supported\n");
                 // 1. get scan mode count
                 sl_u16 modeCount;
                 ans = getScanModeCount(modeCount);
@@ -313,6 +328,7 @@ namespace sl {
                 }
                 return ans;
             }
+            printf("not supported\n");
 
             return ans;        
         }
@@ -416,49 +432,49 @@ namespace sl {
 
         sl_result startScanExpress(bool force, sl_u16 scanMode, sl_u32 options = 0, LidarScanMode* outUsedScanMode = nullptr, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
-            Serial.printf("Starting Scan \n");
+            printf("Starting Scan \n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             if (!isConnected()) {
-                Serial.printf("START SCAN FAILED - not connected\n");
+                printf("START SCAN FAILED - not connected\n");
                 return SL_RESULT_OPERATION_FAIL;
             }
             if (_isScanning) {
-                Serial.printf("START SCAN FAILED - already scanning\n");
+                printf("START SCAN FAILED - already scanning\n");
                 return SL_RESULT_ALREADY_DONE;
             }
             stop(); //force the previous operation to stop
             bool ifSupportLidarConf = false;
             ans = checkSupportConfigCommands(ifSupportLidarConf);
             if (!ans) {
-                Serial.printf("START SCAN FAILED - checkSupportConfigCommands\n");
+                printf("START SCAN FAILED - checkSupportConfigCommands\n");
                 return SL_RESULT_INVALID_DATA;
             }
-            // Serial.printf("Starting Scan 2\n");
+            // printf("Starting Scan 2\n");
 
             if (outUsedScanMode) {
                 outUsedScanMode->id = scanMode;
                 if (ifSupportLidarConf) {
                     ans = getLidarSampleDuration(outUsedScanMode->us_per_sample, outUsedScanMode->id);
                     if (!ans) {
-                        Serial.printf("START SCAN FAILED - invalid data sample duration\n");
+                        printf("START SCAN FAILED - invalid data sample duration\n");
                         return SL_RESULT_INVALID_DATA;
                     }
 
                     ans = getMaxDistance(outUsedScanMode->max_distance, outUsedScanMode->id);
                     if (!ans) {
-                        Serial.printf("START SCAN FAILED - invalid data max distance\n");
+                        printf("START SCAN FAILED - invalid data max distance\n");
                         return SL_RESULT_INVALID_DATA;
                     }
 
                     ans = getScanModeAnsType(outUsedScanMode->ans_type, outUsedScanMode->id);
                     if (!ans) {
-                        Serial.printf("START SCAN FAILED - invalid data ans type \n");
+                        printf("START SCAN FAILED - invalid data ans type \n");
                         return SL_RESULT_INVALID_DATA;
                     }
 
                     ans = getScanModeName(outUsedScanMode->scan_mode, outUsedScanMode->id);
                     if (!ans) {
-                        Serial.printf("START SCAN FAILED - invalid data scan mode name\n");
+                        printf("START SCAN FAILED - invalid data scan mode name\n");
                         return SL_RESULT_INVALID_DATA;
                     }
 
@@ -466,7 +482,7 @@ namespace sl {
                 }
 
             }
-            // Serial.printf("Managed to get here\n");
+            // printf("Managed to get here\n");
             //get scan answer type to specify how to wait data
             sl_u8 scanAnsType;
             if (ifSupportLidarConf) {
@@ -481,7 +497,7 @@ namespace sl {
                 }
             }
             if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
-                // Serial.printf("Semaphore Acquired\n"); 
+                // printf("Semaphore Acquired\n"); 
                 startMotor();
                 sl_lidar_payload_express_scan_t scanReq;
                 memset(&scanReq, 0, sizeof(scanReq));
@@ -497,11 +513,11 @@ namespace sl {
                 if (!ans) { 
                     ans = _sendCommand(SL_LIDAR_CMD_EXPRESS_SCAN, &scanReq, sizeof(scanReq));
                     if (!ans)
-                        Serial.printf("STAT SCAN FAILED - could not send command\n");
+                        printf("STAT SCAN FAILED - could not send command\n");
                         return SL_RESULT_INVALID_DATA; 
                 }
      
-                // Serial.printf("Waiting for Confirmation\n");
+                // printf("Waiting for Confirmation\n");
                 // waiting for confirmation
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
@@ -509,16 +525,16 @@ namespace sl {
                 xSemaphoreGive(lidarLock);
 
                 if (!ans) {
-                    Serial.printf("START SCAN FAILED - _waitResponseHeader\n");
+                    printf("START SCAN FAILED - _waitResponseHeader\n");
                     return ans;
                 }
 
                 // verify whether we got a correct header
                 if (response_header.type != scanAnsType) {
-                    Serial.printf("START SCAN FAILED - incorrect header\n");
+                    printf("START SCAN FAILED - incorrect header\n");
                     return SL_RESULT_INVALID_DATA;
                 }
-                // Serial.printf("Good data acquired\n");
+                // printf("Good data acquired\n");
                 sl_u32 header_size = (response_header.size_q30_subtype & SL_LIDAR_ANS_HEADER_SIZE_MASK);
 
                 if (scanAnsType == SL_LIDAR_ANS_TYPE_MEASUREMENT_CAPSULED) {
@@ -560,7 +576,7 @@ namespace sl {
                 //     return SL_RESULT_OPERATION_FAIL;
                 // }
             }
-            Serial.printf("START SCAN - FAILED TO GET SEMAPHORE\n");
+            printf("START SCAN - FAILED TO GET SEMAPHORE\n");
             return SL_RESULT_OPERATION_FAIL;
 
         }
@@ -610,17 +626,17 @@ namespace sl {
 
         sl_result getDeviceInfo(sl_lidar_response_device_info_t& info, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
-            Serial.printf("getDeviceInfo\n");
+            printf("getDeviceInfo\n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             _disableDataGrabbing();
 			delay(20);
-            // Serial.printf("wat\n");
+            // printf("wat\n");
             if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
-                // Serial.printf("got semaphore\n");
+                // printf("got semaphore\n");
                 ans = _sendCommand(SL_LIDAR_CMD_GET_DEVICE_INFO);
                 if (!ans) {
                     xSemaphoreGive(lidarLock);
-                    Serial.printf("getDeviceInfo - Failed send command\n");
+                    printf("getDeviceInfo - Failed send command\n");
                     return ans;
                 }
                 // xSemaphoreGive(lidarLock);
@@ -629,13 +645,13 @@ namespace sl {
                 return ans;
 
             }
-            Serial.printf("getDeviceInfo - failed semaphore\n");
+            printf("getDeviceInfo - failed semaphore\n");
             return SL_RESULT_OK;
         }
 
         sl_result checkMotorCtrlSupport(MotorCtrlSupport & support, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
-            Serial.printf("checkMotorCtrlSupport\n");
+            printf("checkMotorCtrlSupport\n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             support = MotorCtrlSupportNone;
             _disableDataGrabbing();
@@ -658,6 +674,7 @@ namespace sl {
                         if (!ans) return ans;
 
                         sl_lidar_response_acc_board_flag_t acc_board_flag;
+                        
                         ans = _waitResponse(acc_board_flag, SL_LIDAR_ANS_TYPE_ACC_BOARD_FLAG);
                         if (acc_board_flag.support_flag & SL_LIDAR_RESP_ACC_BOARD_FLAG_MOTOR_CTRL_SUPPORT_MASK) {
                             support = MotorCtrlSupportPwm;
@@ -830,19 +847,19 @@ namespace sl {
 
         sl_result checkSupportConfigCommands(bool& outSupport, sl_u32 timeoutInMs = DEFAULT_TIMEOUT)
         {
-            Serial.printf("checkSupportConfigCommands\n");
+            printf("checkSupportConfigCommands\n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             sl_lidar_response_device_info_t devinfo;
-            // Serial.printf("getting info\n");
+            // printf("getting info\n");
             ans = getDeviceInfo(devinfo, timeoutInMs);
             if (!ans) {
-                Serial.printf("Failed to get device info\n");
+                printf("Failed to get device info\n");
                 return ans;
             }
-            // Serial.printf("info got\n");
+            // printf("info got\n");
             sl_u16 modecount;
             ans = getScanModeCount(modecount, 250);
-            // Serial.printf("mode got\n");
+            // printf("mode got\n");
             if ((sl_result)ans == SL_RESULT_OK)
                 outSupport = true;
 
@@ -855,18 +872,18 @@ namespace sl {
             std::vector<sl_u8> answer;
             // sl_u16 p_answer;
             // sl_u8 *answer = (sl_u8*)&p_answer;
-            Serial.printf("getScanModeConf\n");
+            printf("getScanModeConf\n");
             ans = getLidarConf(SL_LIDAR_CONF_SCAN_MODE_COUNT, answer, std::vector<sl_u8>(), timeoutInMs);
             
             if (!ans) return ans;
-            // Serial.printf("conf got\n");
+            printf("conf got\n");
             const sl_u16 *p_answer = reinterpret_cast<const sl_u16*>(&answer[0]);
-            // Serial.printf("cast schenanigans\n");
+            printf("cast schenanigans\n");
 
-            // Serial.printf("byte0: %d\n", answer[0]);
-            // // Serial.printf("byte1: %d\n", answer[1]);
+            printf("byte0: %d\n", answer[0]);
+            // printf("byte1: %d\n", answer[1]);
             modeCount = p_answer[0];
-            // Serial.printf("schenanigans\n");
+            printf("schenanigans\n");
             return SL_RESULT_OK;
         }
 
@@ -923,7 +940,7 @@ namespace sl {
 
         sl_result getLidarConf(sl_u32 type, std::vector<sl_u8> &outputBuf, const std::vector<sl_u8> &reserve = std::vector<sl_u8>(), sl_u32 timeout = DEFAULT_TIMEOUT)
         {
-            // Serial.printf("conf1\n");
+            // printf("conf1\n");
             sl_lidar_payload_get_scan_conf_t query;
             query.type = type;
             int sizeVec = reserve.size();
@@ -933,40 +950,42 @@ namespace sl {
 
             if (sizeVec > 0)
                 memcpy(query.reserved, &reserve[0], reserve.size());
-            // Serial.printf("conf2\n");
+            // printf("conf2\n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             // printf("LIDAR LOKC AGAIN: %f\n", lidarLock);
             if (xSemaphoreTake(lidarLock, 0) == pdTRUE) {
-                Serial.printf("getLidarLock Took Semaphore\n");
+                printf("getLidarLock Took Semaphore\n");
                 ans = _sendCommand(SL_LIDAR_CMD_GET_LIDAR_CONF, &query, sizeof(query));
+                xSemaphoreGive(lidarLock);
                 if (!ans) {
-                    Serial.printf("getLidarLock Failed to send command\n");
+                    printf("getLidarLock Failed to send command\n");
                     return ans;
                 }
 				delay(20);
                 // waiting for confirmation
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
+                // ans = _waitResponse(acc_board_flag, SL_LIDAR_ANS_TYPE_ACC_BOARD_FLAG);
                 // xSemaphoreGive(lidarLock);
                 if (!ans){
-                    Serial.printf("getLidarLock failed to wait response\n");
+                    printf("getLidarLock failed to wait response\n");
                     return ans;
                 }
 
                 // verify whether we got a correct header
                 if (response_header.type != SL_LIDAR_ANS_TYPE_GET_LIDAR_CONF) {
-                    Serial.printf("getLidarLock Incorrect header\n");
+                    printf("getLidarLock Incorrect header\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 
                 sl_u32 header_size = (response_header.size_q30_subtype & SL_LIDAR_ANS_HEADER_SIZE_MASK);
                 if (header_size < sizeof(type)) {
-                    Serial.printf("getLidarLock received invalid data\n");
+                    printf("getLidarLock received invalid data\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 				delay(100);
                 if (!waitForData(_channel, header_size, timeout)) {
-                    Serial.printf("getLidarLock timed out\n");
+                    printf("getLidarLock timed out\n");
                     return SL_RESULT_OPERATION_TIMEOUT;
                 }
 
@@ -978,7 +997,7 @@ namespace sl {
                 sl_u32 replyType = -1;
                 memcpy(&replyType, &dataBuf[0], sizeof(type));
                 if (replyType != type) {
-                    Serial.printf("getLidarLock received incalid data type\n");
+                    printf("getLidarLock received incalid data type\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 
@@ -987,7 +1006,7 @@ namespace sl {
 
                 //do consistency check
                 if (payLoadLen <= 0) {
-                    Serial.printf("getLidarLock inconsistent data\n");
+                    printf("getLidarLock inconsistent data\n");
                     return SL_RESULT_INVALID_DATA;
                 }
                 //copy all payLoadLen bytes to outputBuf
@@ -995,9 +1014,9 @@ namespace sl {
                 memcpy(&outputBuf[0], &dataBuf[0] + sizeof(type), payLoadLen);
                 xSemaphoreGive(lidarLock);
             } else {
-                Serial.printf("getLidarLock failed to get semaphore\n");
+                printf("getLidarLock failed to get semaphore\n");
             }
-            // Serial.printf("sem failed\n");
+            // printf("sem failed\n");
             return SL_RESULT_OK;
         }
 
@@ -1143,7 +1162,7 @@ namespace sl {
             while (timeoutInMs == -1 || (millis() - startTs) <= timeoutInMs) {
                 // wait for total bytes to be ready
                 if ((bytesReady = serial->available()) < size) {
-                    // Serial.printf("%d / %d bytes ready\n", bytesReady, size);
+                    // printf("%d / %d bytes ready\n", bytesReady, size);
                     delay(1);
                     continue;
                 }
@@ -1158,7 +1177,7 @@ namespace sl {
                 }
                 return true;
             }
-            Serial.printf("waitForData - TIMED OUT - %d / %d bytes ready\n", bytesReady, size);
+            printf("waitForData - TIMED OUT - %d / %d bytes ready\n", bytesReady, size);
             return false;
         }
 
@@ -1796,7 +1815,7 @@ namespace sl {
         sl_result _waitUltraCapsuledNode(sl_lidar_response_ultra_capsule_measurement_nodes_t & node, sl_u32 timeout = DEFAULT_TIMEOUT)
         {
             if (!_isConnected) {
-                Serial.printf("Not connected\n");
+                printf("Not connected\n");
                 return SL_RESULT_OPERATION_FAIL;
             }
 
@@ -1812,7 +1831,7 @@ namespace sl {
 
                 bool ans = waitForData(_channel, remainSize, timeout - waitTime, &recvSize);
                 if (!ans) {
-                    Serial.printf("Scan timed out 1\n");
+                    printf("Scan timed out 1\n");
                     return SL_RESULT_OPERATION_TIMEOUT;
                 }
                 if (recvSize > remainSize) recvSize = remainSize;
@@ -1869,13 +1888,13 @@ namespace sl {
                             }
                             return SL_RESULT_OK;
                         }
-                        Serial.printf("Scan returned invalid data\n");
+                        printf("Scan returned invalid data\n");
                         _is_previous_capsuledataRdy = false;
                         return SL_RESULT_INVALID_DATA;
                     }
                 }
             }
-            Serial.printf("Scan timed ou 2\n");
+            printf("Scan timed ou 2\n");
             _is_previous_capsuledataRdy = false;
             return SL_RESULT_OPERATION_TIMEOUT;
         }
@@ -1885,14 +1904,14 @@ namespace sl {
             Result<nullptr_t> ans = SL_RESULT_OK;
             ans = _waitUltraCapsuledNode(_local_ultra_capsule_node);
             if (!ans) {
-                Serial.printf("Bad data acquired by scan\n");
+                printf("Bad data acquired by scan\n");
                 if ((sl_result)ans != SL_RESULT_OPERATION_TIMEOUT && (sl_result)ans != SL_RESULT_INVALID_DATA) {
-                    Serial.printf("Lidar failed\n");
+                    printf("Lidar failed\n");
                     return SL_RESULT_OPERATION_FAIL;
                 }
                 else {
                     // current data is invalid, do not use it.
-                    Serial.printf("Data is invalid with err %d\n", (sl_result)ans);
+                    printf("Data is invalid with err %d\n", (sl_result)ans);
                     return SL_RESULT_OK;
                 }
             }
@@ -1910,7 +1929,7 @@ namespace sl {
                             xEventGroupSetBits(RPLidarScanEventGroup, EVT_RPLIDAR_SCAN_COMPLETE);
                             xSemaphoreGive(lidarLock);
                         } else {
-                            Serial.printf("Lidar scan failed to acquire semaphore\n");
+                            printf("Lidar scan failed to acquire semaphore\n");
                             // timeout
                             ;
                         }
@@ -2029,22 +2048,22 @@ namespace sl {
             delay(100);
             ans = _waitResponseHeader(&response_header, timeout);
             if (!ans) {
-                Serial.printf("_waitResponse - failed _waitResponseHeader\n");
+                printf("_waitResponse - failed _waitResponseHeader\n");
                 return ans;
             }
             // verify whether we got a correct header
             if (response_header.type != ansType) {
-                Serial.printf("_waitResponse - invalid header type\n");
+                printf("_waitResponse - invalid header type\n");
                 return SL_RESULT_INVALID_DATA;
             }
            delay(50);
             sl_u32 header_size = (response_header.size_q30_subtype & SL_LIDAR_ANS_HEADER_SIZE_MASK);
             if (header_size < sizeof(T)) {
-                Serial.printf("_waitResponse - invalid data size\n");
+                printf("_waitResponse - invalid data size\n");
                 return SL_RESULT_INVALID_DATA;
             }
             if (!waitForData(_channel, header_size, timeout)) {
-                Serial.printf("_waitResponse - timed out waiting for data\n");
+                printf("_waitResponse - timed out waiting for data\n");
                 return SL_RESULT_OPERATION_TIMEOUT;
             }
             _channel->readBytes(reinterpret_cast<sl_u8 *>(&payload), sizeof(T));
@@ -2111,12 +2130,12 @@ namespace sl {
             for (;;) {
                 // break once turned off
                 if (!_isScanning) {
-                    Serial.printf("SCAN TERMINATING - TURNED OFF EXTERNALLY\n");
+                    printf("SCAN TERMINATING - TURNED OFF EXTERNALLY\n");
                     break;
                 }
                 // function pointer funtimes
                 if (!(ans = ((*this).*cacheLidarData)())) {
-                    Serial.printf("FAILED SCAN WITH ERR: %d\n", ans);
+                    printf("FAILED SCAN WITH ERR: %d\n", ans);
                     break;
                     // _isScanning = false;
                     // vTaskDelete(NULL);

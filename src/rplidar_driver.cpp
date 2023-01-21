@@ -55,7 +55,7 @@ namespace rp { namespace standalone{ namespace rplidar {
     RPlidarDriver * RPlidarDriver::CreateDriver()
     {
         //_channelType = drivertype;
-        return  new RPlidarDriver();
+        return new RPlidarDriver();
     }
 
     void RPlidarDriver::DisposeDriver(RPlidarDriver * drv)
@@ -71,8 +71,10 @@ namespace rp { namespace standalone{ namespace rplidar {
         if (!(bool)_lidarDrv) return SL_RESULT_OPERATION_FAIL;
         _channel->setRxBufferSize(bufferSize);
         _channel->begin(baudrate);
+        printf("connecting\n");
 
         sl_result ans =(_lidarDrv)->connect(_channel);
+        printf("connection: %d\n", ans);
         return ans;
     }
 
