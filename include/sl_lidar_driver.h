@@ -40,6 +40,7 @@
 #include "sl_lidar_cmd.h"
 #include "rplidar_cmd.h"
 #include "rplidar_config.h"
+#include "hal/types.h"
 
 #define NORMAL_CAPSULE          0
 #define DENSE_CAPSULE           1
