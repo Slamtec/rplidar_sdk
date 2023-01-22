@@ -449,7 +449,7 @@ namespace sl {
                 printf("START SCAN FAILED - checkSupportConfigCommands\n");
                 return SL_RESULT_INVALID_DATA;
             }
-            // printf("Starting Scan 2\n");
+            printf("Starting Scan 2\n");
 
             if (outUsedScanMode) {
                 outUsedScanMode->id = scanMode;
@@ -482,7 +482,7 @@ namespace sl {
                 }
 
             }
-            // printf("Managed to get here\n");
+            printf("startScanExpress Managed to get here\n");
             //get scan answer type to specify how to wait data
             sl_u8 scanAnsType;
             if (ifSupportLidarConf) {
@@ -497,7 +497,7 @@ namespace sl {
                 }
             }
             if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
-                // printf("Semaphore Acquired\n"); 
+                printf("startScanExpress Semaphore Acquired\n"); 
                 startMotor();
                 sl_lidar_payload_express_scan_t scanReq;
                 memset(&scanReq, 0, sizeof(scanReq));
@@ -517,11 +517,11 @@ namespace sl {
                         return SL_RESULT_INVALID_DATA; 
                 }
      
-                // printf("Waiting for Confirmation\n");
+                printf("startScanExpress Waiting for Confirmation\n");
                 // waiting for confirmation
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
-
+                printf("startScanExpress _waitResponseHeader finished\n");
                 xSemaphoreGive(lidarLock);
 
                 if (!ans) {
@@ -534,7 +534,7 @@ namespace sl {
                     printf("START SCAN FAILED - incorrect header\n");
                     return SL_RESULT_INVALID_DATA;
                 }
-                // printf("Good data acquired\n");
+                printf("startScanExpress Good data acquired\n");
                 sl_u32 header_size = (response_header.size_q30_subtype & SL_LIDAR_ANS_HEADER_SIZE_MASK);
 
                 if (scanAnsType == SL_LIDAR_ANS_TYPE_MEASUREMENT_CAPSULED) {
@@ -942,6 +942,7 @@ namespace sl {
         {
             // printf("conf1\n");
             sl_lidar_payload_get_scan_conf_t query;
+            printf("%l\n", type);
             query.type = type;
             int sizeVec = reserve.size();
 
@@ -953,39 +954,40 @@ namespace sl {
             // printf("conf2\n");
             Result<nullptr_t> ans = SL_RESULT_OK;
             // printf("LIDAR LOKC AGAIN: %f\n", lidarLock);
+            delay(20);
             if (xSemaphoreTake(lidarLock, 0) == pdTRUE) {
-                printf("getLidarLock Took Semaphore\n");
+                printf("getLidarConf Took Semaphore\n");
                 ans = _sendCommand(SL_LIDAR_CMD_GET_LIDAR_CONF, &query, sizeof(query));
                 xSemaphoreGive(lidarLock);
                 if (!ans) {
-                    printf("getLidarLock Failed to send command\n");
+                    printf("getLidarConf Failed to send command\n");
                     return ans;
                 }
 				delay(20);
-                // waiting for confirmation
+                printf("waiting for confirmation\n");
                 sl_lidar_ans_header_t response_header;
                 ans = _waitResponseHeader(&response_header, timeout);
                 // ans = _waitResponse(acc_board_flag, SL_LIDAR_ANS_TYPE_ACC_BOARD_FLAG);
                 // xSemaphoreGive(lidarLock);
                 if (!ans){
-                    printf("getLidarLock failed to wait response\n");
+                    printf("getLidarConf failed to wait response\n");
                     return ans;
                 }
 
                 // verify whether we got a correct header
                 if (response_header.type != SL_LIDAR_ANS_TYPE_GET_LIDAR_CONF) {
-                    printf("getLidarLock Incorrect header\n");
+                    printf("getLidarConf Incorrect header\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 
                 sl_u32 header_size = (response_header.size_q30_subtype & SL_LIDAR_ANS_HEADER_SIZE_MASK);
                 if (header_size < sizeof(type)) {
-                    printf("getLidarLock received invalid data\n");
+                    printf("getLidarConf received invalid data\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 				delay(100);
                 if (!waitForData(_channel, header_size, timeout)) {
-                    printf("getLidarLock timed out\n");
+                    printf("getLidarConf timed out\n");
                     return SL_RESULT_OPERATION_TIMEOUT;
                 }
 
@@ -997,7 +999,7 @@ namespace sl {
                 sl_u32 replyType = -1;
                 memcpy(&replyType, &dataBuf[0], sizeof(type));
                 if (replyType != type) {
-                    printf("getLidarLock received incalid data type\n");
+                    printf("getLidarConf received incalid data type\n");
                     return SL_RESULT_INVALID_DATA;
                 }
 
@@ -1006,7 +1008,7 @@ namespace sl {
 
                 //do consistency check
                 if (payLoadLen <= 0) {
-                    printf("getLidarLock inconsistent data\n");
+                    printf("getLidarConf inconsistent data\n");
                     return SL_RESULT_INVALID_DATA;
                 }
                 //copy all payLoadLen bytes to outputBuf
@@ -1014,7 +1016,7 @@ namespace sl {
                 memcpy(&outputBuf[0], &dataBuf[0] + sizeof(type), payLoadLen);
                 xSemaphoreGive(lidarLock);
             } else {
-                printf("getLidarLock failed to get semaphore\n");
+                printf("getLidarConf failed to get semaphore\n");
             }
             // printf("sem failed\n");
             return SL_RESULT_OK;
@@ -2001,7 +2003,6 @@ namespace sl {
             sl_u8  recvBuffer[sizeof(sl_lidar_ans_header_t)];
             sl_u8  *headerBuffer = reinterpret_cast<sl_u8 *>(header);
             sl_u32 waitTime;
-
             while ((waitTime = millis() - startTs) <= timeout) {
                 size_t remainSize = sizeof(sl_lidar_ans_header_t) - recvPos;
                 size_t recvSize;
@@ -2094,6 +2095,7 @@ namespace sl {
 
         void _createScanTask(rplidar_scan_cache scan) {
             _scan_type = scan;
+            printf("CREATING SCAN TASK %d\n", scan);
             xTaskCreatePinnedToCore(this->_scanTaskWrapper, "RPLIDAR_SCAN", RPLIDAR_SCAN_TASK_STACK_SIZE, this, RPLIDAR_SCAN_TASK_PRIORITY, NULL, RPLIDAR_SCAN_TASK_CORE);
         }
 
