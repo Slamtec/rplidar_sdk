@@ -1,5 +1,18 @@
+RPLIDAR Public C++ SDK for Arduino+FreeRTOS
+===========================================
+
+This is a fork of the [Slamtec RPLIDAR SDK v2.0.0](https://github.com/Slamtec/rplidar_sdk) for Arduino implemented using FreeRTOS.
+
+This project is currently a WIP as I implement full SDK functionality from my mess of hot-coded scan functionality from a university project.
+
+The SDK allows for full utilisation of the RPLIDAR including different scan modes (see RPLIDAR SDK Manual for full list) and multi-tasked scan implementation, allowing for simultaneous data collection and processing.
+
+This repository has been implemented and testing using an RPLIDAR A1M6. Theoretically, all other models of RPLIDAR should also work (A1-3, M1-2), but as I neither own or have access to them they have not been tested.
+
+If you have any questions about usage or implementation feel free to get in contact with me by leaving a comment or shooting me an email.
+
 Slamtec RPLIDAR Public SDK for C++
-==================================
+----------------------------------
 
 Introduction
 ------------
@@ -20,6 +33,7 @@ The demo applications are licensed under GPLv3 license.
 
 Release Notes
 -------------
+
 * [v2.0.0](https://github.com/Slamtec/rplidar_sdk/tree/feature/release-2.0/docs/ReleaseNote.v2.0.0.md)
 * [v1.12.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.12.0.md)
 * [v1.11.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.11.0.md)
@@ -29,43 +43,10 @@ Release Notes
 * [v1.8.1](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.1.md)
 * [v1.8.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.0.md)
 
-Supported Platforms
--------------------
-
-RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 and 2019 projects and Makefile.
-
-| LIDAR Model \ Platform | Windows | macOS | Linux |
-| ---------------------- | ------- | ----- | ------|
-| A1                     | Yes     | Yes   | Yes   |
-| A2                     | Yes     | Yes   | Yes   |
-| A3                     | Yes     | Yes   | Yes   |
-| S1                     | Yes     | Yes   | Yes   |
-| S2                     | Yes     | Yes   | Yes   |
-
 Quick Start
 -----------
 
-### On Windows
-
-If you have Microsoft Visual Studio 2010 installed, just open workspaces/vc10/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
-If you have Microsoft Visual Studio 2019 installed, just open workspaces/vc14/sdk_and_demo.sln, and compile. It contains the library as well as some demo applications.
-
-### On macOS and Linux
-
-Please make sure you have make and g++ installed, and then just invoke make in the root directory, you can get the compiled result at `output/$PLATFORM/$SCHEME`, such as `output/Linux/Release`.
-
-    make
-
-The Makefile compiles Release build by default, and you can also use `make DEBUG=1` to compile Debug builds.
-
-Cross Compile
--------------
-
-The Makefile system used by RPLIDAR public SDK support cross compiling.
-
-The following command can be used to cross compile the SDK for `arm-linux-gnueabihf` targets:
-
-    CROSS_COMPILE_PREFIX=arm-linux-gnueabihf ./cross_compile.sh
+TBF.
 
 Demo Applications
 -----------------

@@ -34,6 +34,7 @@
 
 #pragma once
 #include "sl_lidar_driver.h"
+#include "hal/types.h"
 
 #ifndef __cplusplus
 #error "The RPlidar SDK requires a C++ compiler to be built"
