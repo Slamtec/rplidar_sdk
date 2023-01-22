@@ -605,11 +605,13 @@ namespace sl {
             uxBits = xEventGroupWaitBits(RPLidarScanEventGroup, EVT_RPLIDAR_SCAN_GROUP, pdTRUE, pdFALSE, timeout);
             if (uxBits & EVT_RPLIDAR_SCAN_COMPLETE) {
                 
-                if (_cached_scan_node_hq_count == 0) return SL_RESULT_OPERATION_TIMEOUT; //consider as timeout
+                // no data available, consider as timeout
+                if (_cached_scan_node_hq_count == 0) return SL_RESULT_OPERATION_TIMEOUT;
 
-                if (xSemaphoreTake(lidarLock, LIDAR_TIMEOUT)) {
+                if (xSemaphoreTake(lidarLock, timeout)) {
                     size_t size_to_copy = std::min(count, _cached_scan_node_hq_count);
-                    memcpy(nodebuffer, _cached_scan_node_hq_buf, size_to_copy * sizeof      (sl_lidar_response_measurement_node_hq_t));
+                    memcpy(nodebuffer, _cached_scan_node_hq_buf, size_to_copy * 
+                            sizeof(sl_lidar_response_measurement_node_hq_t));
 
                     count = size_to_copy;
                     _cached_scan_node_hq_count = 0;
