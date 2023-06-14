@@ -446,7 +446,7 @@ namespace sl {
             }
 
             //get scan answer type to specify how to wait data
-            sl_u8 scanAnsType;
+            sl_u8 scanAnsType = 0;
             if (ifSupportLidarConf) {
                 getScanModeAnsType(scanAnsType, scanMode);
             }
@@ -1068,7 +1068,6 @@ namespace sl {
         
         sl_result  _sendCommand(sl_u16 cmd, const void * payload = NULL, size_t payloadsize = 0 )
         {
-            sl_u8 pkt_header[10];
             sl_u8 checksum = 0;
 
             std::vector<sl_u8> cmd_packet;
@@ -1099,7 +1098,7 @@ namespace sl {
   
             }
             sl_u8 packet[1024];
-            for (int pos = 0; pos < cmd_packet.size(); pos++) {
+            for (sl_u32 pos = 0; pos < cmd_packet.size(); pos++) {
                 packet[pos] = cmd_packet[pos];
             }
             _channel->write(packet, cmd_packet.size());
@@ -1355,7 +1354,7 @@ namespace sl {
 
                     int dist_major2;
 
-                    sl_u32 scalelvl1, scalelvl2;
+                    sl_u32 scalelvl1 = 0, scalelvl2 = 0;
 
                     // prefetch next ...
                     if (pos == _countof(_cached_previous_ultracapsuledata.ultra_cabins) - 1) {
