@@ -54,14 +54,14 @@ using namespace sl;
 
 void print_usage(int argc, const char * argv[])
 {
-    printf("Simple LIDAR data grabber for SLAMTEC LIDAR.\n"
-           "Version: %s \n"
-           "Usage:\n"
-           " For serial channel %s --channel --serial <com port> [baudrate]\n"
-           "The baudrate is 115200(for A2) or 256000(for A3).\n"
-		   " For udp channel %s --channel --udp <ipaddr> [port NO.]\n"
-           "The LPX default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
-           , "SL_LIDAR_SDK_VERSION", argv[0], argv[0]);
+    printf("Usage:\n"
+           " For serial channel\n %s --channel --serial <com port> [baudrate]\n"
+           " The baudrate used by different models is as follows:\n"
+           "  A1(115200),A2M7(256000),A2M8(115200),A2M12(256000),"
+           "A3(256000),S1(256000),S2(1000000),S3(1000000)\n"
+		   " For udp channel\n %s --channel --udp <ipaddr> [port NO.]\n"
+           " The T1 default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
+           , argv[0], argv[0]);
 }
 
 bool checkSLAMTECLIDARHealth(ILidarDriver * drv)

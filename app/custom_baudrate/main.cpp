@@ -66,18 +66,15 @@ void print_usage(int argc, const char* argv[])
         " %s <com port> [baudrate]\n"
         " The baudrate can be ANY possible values between 115200 to 512000.\n"
 
-        , "SL_LIDAR_SDK_VERSION", argv[0], argv[0]);
+        , "SL_LIDAR_SDK_VERSION", argv[0]);
 }
 
 
 int main(int argc, const char* argv[]) {
 
     const char* opt_port_dev;
-    sl_u32         opt_required_baudrate = 460000;
-    sl_result     op_result;
-
-
-    bool useArgcBaudrate = false;
+    sl_u32      opt_required_baudrate = 460000;
+    sl_result   op_result;
 
     IChannel* _channel;
 
@@ -116,12 +113,10 @@ int main(int argc, const char* argv[]) {
 
     _channel = (*createSerialPortChannel(opt_port_dev, opt_required_baudrate));
 
-    int result = 0;
     do {
 
         if (SL_IS_FAIL((drv)->connect(_channel))) {
             fprintf(stderr, "Error, failed to bind to the serial port.\n");
-            result = -2;
             break;
         }
 
@@ -131,7 +126,6 @@ int main(int argc, const char* argv[]) {
         if (SL_IS_FAIL((drv)->negotiateSerialBaudRate(opt_required_baudrate, &baudrateDetected)))
         {
             fprintf(stderr, "Error, cannot perform baudrate negotiation.\n");
-            result = -3;
             break;
         }
 
@@ -146,7 +140,6 @@ int main(int argc, const char* argv[]) {
 
         if (SL_IS_FAIL((drv)->connect(_channel))) { //reconnect, otherwise, corrupted data will be retrieved.
             fprintf(stderr, "Error, failed to bind to the serial port.\n");
-            result = -2;
             break;
         }
 
@@ -158,7 +151,6 @@ int main(int argc, const char* argv[]) {
 
             if (SL_IS_FAIL(op_result)) {
                 fprintf(stderr, "Neogiation failure, the new baudrate cannot be used.\n");
-                result = -4;
                 break;
             }
 
