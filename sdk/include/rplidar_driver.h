@@ -44,11 +44,12 @@ namespace rp { namespace standalone{ namespace rplidar {
     using namespace sl;
     typedef LidarScanMode RplidarScanMode;
 
-//enum {
-//    DRIVER_TYPE_SERIALPORT = 0x0,
-//    DRIVER_TYPE_TCP = 0x1,
-//    DRIVER_TYPE_UDP = 0x2,
-//};
+enum {
+   DRIVER_TYPE_SERIALPORT = 0x0,
+   DRIVER_TYPE_TCP = 0x1,
+   DRIVER_TYPE_UDP = 0x2,
+};
+
 class RPlidarDriver {
 public:
     enum {
