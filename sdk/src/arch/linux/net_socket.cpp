@@ -723,7 +723,7 @@ public:
         assert(addr);
         size_t ans = ::sendto( _socket_fd, buffer, len, 0, addr, sizeof(sockaddr_storage));
         if (ans != (size_t)-1) {
-            assert(ans == (int)len);
+            assert(ans == len);
             return RESULT_OK;
         } else {
             switch (errno) {
