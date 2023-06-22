@@ -102,6 +102,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\app\rplidar_osc\cxxopts.hpp" />
     <ClInclude Include="..\..\..\app\rplidar_osc\oscpack\ip\IpEndpointName.h" />
     <ClInclude Include="..\..\..\app\rplidar_osc\oscpack\ip\NetworkingUtils.h" />
     <ClInclude Include="..\..\..\app\rplidar_osc\oscpack\ip\PacketListener.h" />

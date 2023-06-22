@@ -80,5 +80,8 @@
     <ClInclude Include="..\..\..\app\rplidar_osc\oscpack\osc\OscTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\app\rplidar_osc\cxxopts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
