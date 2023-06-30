@@ -1,12 +1,15 @@
 /*
- *  SLAMTEC LIDAR
- *  Simple Data Grabber Demo App
+ *  Slamtec LIDAR OSC sender
  *
  *  Copyright (c) 2009 - 2014 RoboPeak Team
  *  http://www.robopeak.com
  *  Copyright (c) 2014 - 2020 Shanghai Slamtec Co., Ltd.
  *  http://www.slamtec.com
  *  Copyright (c) 2023 - Interferences Arts et Technologies
+ *  https://interferences.ca
+ * 
+ *  @author: Alexandre Quessy <alexandre.quessy@artpluscode.com>
+ *  https://artpluscode.com
  */
  /*
   * This program is free software: you can redistribute it and/or modify
@@ -37,7 +40,7 @@
 #include "oscpack/osc/OscOutboundPacketStream.h"
 #include "oscpack/ip/UdpSocket.h"
 
-  // Using directives
+// Using directives
 using namespace sl;
 
 // Macros
@@ -61,9 +64,9 @@ static inline void delay(sl_word_size_t ms) {
 #endif
 
 // Constants
-// TODO: Allow to configure the OSC port and host to send to
 static const char* DEFAULT_OSC_SEND_ADDRESS = "127.0.0.1";
 static const int DEFAULT_OSC_SEND_PORT = 5678;
+static const char* SOFTWARE_VERSION = "0.1.0";
 
 /**
  * Settings for this program.
@@ -91,6 +94,9 @@ private:
     std::string input_serial_device;
     // The baudrate is 115200(for A2) , 256000(for A3 and S1), 1000000(for S2).
     int input_serial_baudrate;
+
+    // There are two scan modes: express and standard.
+    bool is_express_mode = false;
 
     // SHow help and exit.
     bool is_show_help = false;
@@ -200,6 +206,14 @@ public:
         return this->is_retry_if_error;
     }
 
+    void set_is_express_mode(bool value) {
+        this->is_express_mode = value;
+    }
+
+    bool get_is_express_mode() const {
+        return this->is_express_mode;
+    }
+
     friend std::ostream& operator<< (std::ostream& out, const Settings& settings);
 };
 
@@ -207,7 +221,7 @@ std::ostream& operator<< (std::ostream& out, const Settings& settings) {
     out << "Settings:";
     out << std::endl << " - output_osc_host: " << settings.output_osc_host;
     out << std::endl << " - output_osc_port: " << settings.output_osc_port;
-    out << ", " << std::endl << "input_channel_type: ";
+    out << std::endl << " - input_channel_type: ";
     if (settings.is_input_channel_serial()) {
         out << "SERIAL";
         out << std::endl << " - input_serial_baudrate: " << settings.input_serial_baudrate;
@@ -218,10 +232,10 @@ std::ostream& operator<< (std::ostream& out, const Settings& settings) {
         out << std::endl << " - input_udp_host: " << settings.input_udp_host;
         out << std::endl << " - input_udp_port: " << settings.input_udp_port;
     }
-    out << ", " << std::endl << " - is_retry_if_error: " << (settings.get_is_retry_if_error() ? "true" : "false");
-    out << ", " << std::endl << " - is_show_help: " << (settings.get_is_show_help() ? "true" : "false");
-    out << ", " << std::endl << " - is_verbose: " << (settings.get_is_verbose() ? "true" : "false");
-    out << ')';
+    out << std::endl << " - is_express_mode: " << (settings.get_is_express_mode() ? "true" : "false");
+    out << std::endl << " - is_retry_if_error: " << (settings.get_is_retry_if_error() ? "true" : "false");
+    out << std::endl << " - is_show_help: " << (settings.get_is_show_help() ? "true" : "false");
+    out << std::endl << " - is_verbose: " << (settings.get_is_verbose() ? "true" : "false");
     return out;
 }
 
@@ -388,7 +402,7 @@ sl_result capture_and_send_osc(ILidarDriver* drv, UdpTransmitSocket& transmitSoc
  */
 bool parse_command_line_options(int argc, const char* argv[], Settings& settings) {
     try {
-        std::unique_ptr<cxxopts::Options> allocated(new cxxopts::Options(argv[0], " - sends LiDAR data over OSC"));
+        std::unique_ptr<cxxopts::Options> allocated(new cxxopts::Options(argv[0], "Reads data from LiDAR and send it over OSC"));
         auto& options = *allocated;
         options
             .positional_help("[optional args]")
@@ -403,20 +417,23 @@ bool parse_command_line_options(int argc, const char* argv[], Settings& settings
             ("input-serial-device", "Input serial device. (COM3)", cxxopts::value<std::string>())
             ("input-udp-port", "Input UDP port (8089)", cxxopts::value<int>(), "N")
             ("input-udp-host", "Input UDP host (192.168.11.2)", cxxopts::value<std::string>())
-            ("H,output-osc-host", "Output OSC host (127.0.0.1)", cxxopts::value<std::string>())
+            ("H,output-osc-host", "Output OSC host (127.0.0.1) Only IP addresses are supported.", cxxopts::value<std::string>())
             ("p,output-osc-port", "Output OSC port (5678)", cxxopts::value<int>(), "N")
             ("q,quiet", "Quiet non-verbose output.", cxxopts::value<bool>()->default_value("false"))
+            ("x,express", "Express scan mode. (the default is standard)", cxxopts::value<bool>()->default_value("false"))
             // TODO: Add a retry if error option
             // TODO: Add an option to show the histogram
             // TODO: Add an option to print the data once and exit.
-            ("long-description",
-                "Reads data from a LiDAR and sends it over OSC.")
-            ("help", "Print help and exit.")
+            // TODO: Add an option for the initial sleep duration. (default is 3000 ms)
+            ("help", "Prints this help and exits.")
             ;
         auto result = options.parse(argc, argv);
 
         if (result.count("quiet")) {
             settings.set_is_verbose(false);
+        }
+        if (result.count("express")) {
+            settings.set_is_express_mode(true);
         }
         if (result.count("input-serial-baudrate")) {
             int value = result["input-serial-baudrate"].as<int>();
@@ -449,18 +466,29 @@ bool parse_command_line_options(int argc, const char* argv[], Settings& settings
             return true;
         }
         if (settings.get_is_verbose()) {
-            std::cout << "Arguments remain = " << argc << std::endl;
+            std::cout << "Version: " << SOFTWARE_VERSION << std::endl;
+            // Print remaining arguments:
             auto& arguments = result.arguments();
-            std::cout << "Saw " << arguments.size() << " arguments" << std::endl;
-
-            std::cout << "Unmatched options: ";
-            for (const auto& option : result.unmatched()) {
-                std::cout << "'" << option << "' ";
+            if (arguments.size() > 0) {
+                std::cout << "Number of command-line arguments: " << argc << std::endl;
+                std::cout << "Parsed " << arguments.size() << " options:" << std::endl;
+                for (auto iter = arguments.begin(); iter != arguments.end(); iter++) {
+                    cxxopts::KeyValue item = *iter;
+                    std::cout << " - " << item.key() << ": " << item.value() << std::endl;
+                }
             }
-            std::cout << std::endl;
+            // Print unmatched options:
+            std::vector<std::string> unmatchedOptions = result.unmatched();
+            if (unmatchedOptions.size() > 0) {
+                std::cout << "Warning: Unmatched options: ";
+                for (const auto& option : unmatchedOptions) {
+                    std::cout << "'" << option << "' ";
+                }
+                std::cout << std::endl;
+            }
         }
     } catch (const cxxopts::exceptions::exception& e) {
-        std::cout << "error parsing options: " << e.what() << std::endl;
+        std::cout << "Error parsing options: " << e.what() << std::endl;
         return false;
     }
     return true;
@@ -499,7 +527,7 @@ int main(int argc, const char* argv[]) {
     ILidarDriver* drv = *createLidarDriver();
 
     if (! drv) {
-        fprintf(stderr, "insufficent memory, exit\n");
+        fprintf(stderr, "Insufficent memory, exit\n");
         exit( -2 );
     }
 
@@ -580,16 +608,17 @@ int main(int argc, const char* argv[]) {
             switch (healthinfo.status) {
                 case SL_LIDAR_STATUS_OK: {
                     if (settings.get_is_verbose()) {
-                        printf("Lidar health status : OK.");
+                        std::cout << "Lidar health status : OK." << std::endl;
+
                     }
                     break; // exit the switch-case
                 }
                 case SL_LIDAR_STATUS_WARNING: {
-                    printf("Lidar health status : Warning.");
+                    std::cout << "Lidar health status : Warning." << std::endl;
                     break; // exit the switch-case
                 }
                 case SL_LIDAR_STATUS_ERROR: {
-                    printf("Lidar health status : Error.");
+                    std::cout << "Lidar health status : Error." << std::endl;
                     break; // exit the switch-case
                 }
             }
@@ -620,19 +649,71 @@ int main(int argc, const char* argv[]) {
             }
         }
 
+        // Lists the scan modes and try to guess which one to use
+        std::vector<LidarScanMode> scanModes;
+        scanModes.clear();
+        sl_result scanModesResult = drv->getAllSupportedScanModes(scanModes);
+        sl_u16 typicalMode;
+        std::map<sl_u16, std::string> scanModesMap;
+        drv->getTypicalScanMode(typicalMode);
+
+        std::vector<LidarScanMode>::iterator modeIter = scanModes.begin();
+        if (settings.get_is_verbose()) {
+            std::cout << "All supported scan modes:" << std::endl;
+        }
+        for (; modeIter != scanModes.end(); modeIter++) {
+            std::string scanModeName = std::string(modeIter->scan_mode);
+            sl_u16 scanModeId = modeIter->id;
+            scanModesMap[scanModeId] = scanModeName;
+            if (settings.get_is_verbose()) {
+                std::cout << " - " << scanModeName << " (" << static_cast<int>(scanModeId) << ")" << std::endl;
+            }
+        }
+        if (settings.get_is_verbose()) {
+            std::cout << "Typical mode: " << typicalMode << std::endl;
+        }
+
         // Take only one 360 deg scan and display the result as a histogram
         // you can force slamtec lidar to perform scan operation regardless whether the motor is rotating
-        if (SL_IS_FAIL(drv->startScan(0, 1))) {
-            fprintf(stderr, "Error, cannot start the scan operation.\n");
-            break; // exit the while loop
+        if (settings.get_is_express_mode()) {
+            sl_u16 actual_scan_mode = typicalMode;
+            // XXX: Uncomment this to use another scan mode:
+            // actual_scan_mode = 0;
+            if (settings.get_is_verbose()) {
+                std::cout << "Using the express mode." << std::endl;
+                std::string scanModeName = scanModesMap[actual_scan_mode];
+                std::cout << "Actual scan mode we will attempt to use: " << actual_scan_mode << " (" << scanModeName << ")" << std::endl;
+            }
+            if (SL_IS_FAIL(drv->startScanExpress(false, actual_scan_mode, 0))) {
+                fprintf(stderr, "Error, cannot start the scan operation.\n");
+                ret_val = 1; // Will exit with an error
+                break; // exit the while loop
+            }
+        } else {
+            if (settings.get_is_verbose()) {
+                std::cout << "Using the standard mode." << std::endl;
+            }
+            if (SL_IS_FAIL(drv->startScan(
+                false, // force
+                true // use typical scan
+            ))) {
+                fprintf(stderr, "Error, cannot start the scan operation.\n");
+                ret_val = 1; // Will exit with an error
+                break; // exit the while loop
+            }
         }
 
         // Wait 3 seconds??
         // TODO: Investigate removing the 3-second delay before capturing and sending data.
+        std::cout << "Waiting a little bit..." << std::endl; // FIXME: Not sure why.
         delay(3000);
+        if (settings.get_is_verbose()) {
+            std::cout << "Starting to scan." << std::endl;
+        }
 
         if (SL_IS_FAIL(capture_and_send_osc(drv, transmitSocket))) {
             fprintf(stderr, "Error, cannot grab scan data.\n");
+            ret_val = 1; // Will exit with an error
             break; // exit the while loop
         }
 
