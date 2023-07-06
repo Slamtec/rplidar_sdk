@@ -176,6 +176,7 @@ namespace sl {
 
         //Tune tail
         for (i = count - 1; i < count; i--) {
+            // To avoid array overruns, use the i < count condition
             if (getDistanceQ2(nodebuffer[i]) == 0) {
                 continue;
             }
