@@ -1,6 +1,9 @@
 Slamtec RPLIDAR Public SDK for C++
 ==================================
 
+See [the how-to.md file](how-to.md) for how to the OSC sender!
+
+
 Introduction
 ------------
 

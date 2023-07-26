@@ -106,6 +106,10 @@ private:
 
     // Retry in case of an error (experimental)
     bool is_retry_if_error = false;
+
+    // Motor speed. (65535 is the default)
+    // Only works when using the serial input.
+    unsigned int motor_speed = DEFAULT_MOTOR_SPEED; // 65535
 public:
     Settings() {
         // Set all the default values:
@@ -214,16 +218,26 @@ public:
         return this->is_express_mode;
     }
 
+    unsigned int get_motor_speed() const {
+        return this->motor_speed;
+    }
+
+    void set_motor_speed(unsigned int value) {
+        this->motor_speed = value;
+    }
+
     friend std::ostream& operator<< (std::ostream& out, const Settings& settings);
 };
 
 std::ostream& operator<< (std::ostream& out, const Settings& settings) {
     out << "Settings:";
+    
     out << std::endl << " - output_osc_host: " << settings.output_osc_host;
     out << std::endl << " - output_osc_port: " << settings.output_osc_port;
     out << std::endl << " - input_channel_type: ";
     if (settings.is_input_channel_serial()) {
         out << "SERIAL";
+        out << std::endl << " - motor_speed: " << settings.motor_speed;
         out << std::endl << " - input_serial_baudrate: " << settings.input_serial_baudrate;
         out << std::endl << " - input_serial_device: " << settings.input_serial_device;
     }
@@ -421,6 +435,7 @@ bool parse_command_line_options(int argc, const char* argv[], Settings& settings
             ("p,output-osc-port", "Output OSC port (5678)", cxxopts::value<int>(), "N")
             ("q,quiet", "Quiet non-verbose output.", cxxopts::value<bool>()->default_value("false"))
             ("x,express", "Express scan mode. (the default is standard)", cxxopts::value<bool>()->default_value("false"))
+            ("s,speed", "Speed of the motor (65535) - Note: The function will stop scan if speed is DEFAULT_MOTOR_SPEED.", cxxopts::value<int>(), "N")
             // TODO: Add a retry if error option
             // TODO: Add an option to show the histogram
             // TODO: Add an option to print the data once and exit.
@@ -464,6 +479,10 @@ bool parse_command_line_options(int argc, const char* argv[], Settings& settings
                 std::cout << options.help({ "", "Group" }) << std::endl;
             }
             return true;
+        }
+        if (result.count("speed")) {
+            int value = result["speed"].as<int>();
+            settings.set_motor_speed(value);
         }
         if (settings.get_is_verbose()) {
             std::cout << "Version: " << SOFTWARE_VERSION << std::endl;
@@ -521,7 +540,7 @@ int main(int argc, const char* argv[]) {
     UdpTransmitSocket transmitSocket(IpEndpointName(
         settings.get_output_osc_host().c_str(),
         settings.get_output_osc_port()));
-    IChannel* _channel;
+    IChannel* _channel = NULL;
 
     // create the driver instance
     ILidarDriver* drv = *createLidarDriver();
@@ -642,11 +661,8 @@ int main(int argc, const char* argv[]) {
             }
         }
 
-        switch (opt_channel_type) {
-            case CHANNEL_TYPE_SERIALPORT: {
-                drv->setMotorSpeed();
-                break; // exit the switch-case
-            }
+        if (opt_channel_type == CHANNEL_TYPE_SERIALPORT) {
+            drv->setMotorSpeed(settings.get_motor_speed());
         }
 
         // Lists the scan modes and try to guess which one to use
