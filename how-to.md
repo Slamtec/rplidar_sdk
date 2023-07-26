@@ -10,6 +10,8 @@ See "How to send data over OSC" below.
 - Decompress `tools/cp2102_driver/CP210x_Windows_Drivers.zip`
 - Run `tools/cp2102_driver/CP210x_Windows_Drivers/CP210xVCPInstaller_x64.exe`
 - Open `workspaces/vc14/sdk_and_demo.sln` with Visual Studio 2022 Community
+- Select the "Release" Solution Configuration by using the dropdown menu that says
+  "Debug" in the top of the main window. Instead, it should say "Release".
 - In the Solution Explorer panel:
   - Right-click `rplidar_driver`, choose `Build`
   - Right-click `simple_grabber`, choose `Build`

@@ -7,9 +7,9 @@
 
 :: @echo off
 
-:: set exectuable=output\win32\Debug\rplidar_osc.exe
+:: set exectuable=output\win32\Release\rplidar_osc.exe
 
 :: @echo on
 
 :: %executable% %*
-output\win32\Debug\rplidar_osc.exe %*
+output\win32\Release\rplidar_osc.exe %*
