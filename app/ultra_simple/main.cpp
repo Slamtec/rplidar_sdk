@@ -60,7 +60,7 @@ void print_usage(int argc, const char * argv[])
            "  A1(115200),A2M7(256000),A2M8(115200),A2M12(256000),"
            "A3(256000),S1(256000),S2(1000000),S3(1000000)\n"
 		   " For udp channel\n %s --channel --udp <ipaddr> [port NO.]\n"
-           " The T1 default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
+           " The T1 default ipaddr is 192.168.11.2, and the port NO. is 8089. Please refer to the datasheet for details.\n"
            , argv[0], argv[0]);
 }
 
@@ -107,7 +107,7 @@ int main(int argc, const char * argv[]) {
     IChannel* _channel;
 
     printf("Ultra simple LIDAR data grabber for SLAMTEC LIDAR.\n"
-           "Version: %s\n", "SL_LIDAR_SDK_VERSION");
+           "Version: %s\n", SL_LIDAR_SDK_VERSION);
 
 	 
 	if (argc>1)

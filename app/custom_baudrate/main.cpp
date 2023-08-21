@@ -66,7 +66,7 @@ void print_usage(int argc, const char* argv[])
         " %s <com port> [baudrate]\n"
         " The baudrate can be ANY possible values between 115200 to 512000.\n"
 
-        , "SL_LIDAR_SDK_VERSION", argv[0]);
+        , SL_LIDAR_SDK_VERSION, argv[0]);
 }
 
 

@@ -28,7 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sl_lidar.h" 
+#include "sl_lidar.h"
+#include "rplidar.h"
 #include "sl_lidar_driver.h"
 
 #ifndef _countof
@@ -55,15 +56,15 @@ using namespace sl;
 void print_usage(int argc, const char * argv[])
 {
     printf("Simple LIDAR data grabber for SLAMTEC LIDAR.\n"
-           "Version:  %s \n"
+           "Version: %s \n"
            "Usage:\n"
            " For serial channel %s --channel --serial <com port> [baudrate]\n"
            " The baudrate used by different models is as follows:\n"
            "  A1(115200),A2M7(256000),A2M8(115200),A2M12(256000),"
            "A3(256000),S1(256000),S2(1000000),S3(1000000)\n"
 		   " For udp channel %s --channel --udp <ipaddr> [port NO.]\n"
-           "The LPX default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
-           , "SL_LIDAR_SDK_VERSION",  argv[0], argv[0]);
+           "The LPX default ipaddr is 192.168.11.2, and the port NO. is 8089. Please refer to the datasheet for details.\n"
+           , SL_LIDAR_SDK_VERSION,  argv[0], argv[0]);
 }
 
 
