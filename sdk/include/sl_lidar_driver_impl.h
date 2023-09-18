@@ -115,7 +115,7 @@ namespace sl {
 			void _dense_capsuleToNormal(const sl_lidar_response_capsule_measurement_nodes_t & capsule, sl_lidar_response_measurement_node_hq_t *nodebuffer, size_t &nodeCount);
 			sl_result _cacheCapsuledScanData();
 
-			void _ultra_dense_capsuleToNormal(const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t& capslue, sl_lidar_response_measurement_node_hq_t* nodebuffer, size_t& nodeCount);
+			void _ultra_dense_capsuleToNormal(const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t& capsule, sl_lidar_response_measurement_node_hq_t* nodebuffer, size_t& nodeCount);
 			sl_result _waitUltraDenseCapsuledNode(sl_lidar_response_ultra_dense_capsule_measurement_nodes_t& node, sl_u32 timeout = DEFAULT_TIMEOUT);
 			sl_result _cacheUltraDenseCapsuledScanData();
 			

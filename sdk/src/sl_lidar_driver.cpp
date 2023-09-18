@@ -1777,10 +1777,10 @@ namespace sl {
             return SL_RESULT_OPERATION_TIMEOUT;
         }
 
-        void _ultra_dense_capsuleToNormal(const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t& capslue, sl_lidar_response_measurement_node_hq_t* nodebuffer, size_t& nodeCount)
+        void _ultra_dense_capsuleToNormal(const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t& capsule, sl_lidar_response_measurement_node_hq_t* nodebuffer, size_t& nodeCount)
         {
             static int lastNodeSyncBit = 0;
-            const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t* ultra_dense_capsule = reinterpret_cast<const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t*>(&capslue);
+            const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t* ultra_dense_capsule = reinterpret_cast<const sl_lidar_response_ultra_dense_capsule_measurement_nodes_t*>(&capsule);
             nodeCount = 0;
             if (_is_previous_capsuledataRdy) {
                 int diffAngle_q8;
