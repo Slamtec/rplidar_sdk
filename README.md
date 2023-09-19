@@ -1,25 +1,22 @@
-Slamtec RPLIDAR Public SDK for C++
-==================================
+# Slamtec RPLIDAR Public SDK for C++
 
-Introduction
-------------
+## Introduction
 
-Slamtec RPLIDAR(https://www.slamtec.com) series is a set of high-performance and low-cost LIDAR(https://en.wikipedia.org/wiki/Lidar) sensors, which is the perfect sensor of 2D SLAM, 3D reconstruction, multi-touch, and safety applications.
+Slamtec RPLIDAR(<https://www.slamtec.com>) series is a set of high-performance and low-cost LIDAR(<https://en.wikipedia.org/wiki/Lidar>) sensors, which is the perfect sensor of 2D SLAM, 3D reconstruction, multi-touch, and safety applications.
 
 This is the public SDK of RPLIDAR products in C++, and open-sourced under GPLv3 license.
 
-If you are using ROS (Robot Operating System), please use our open-source ROS node directly: https://github.com/slamtec/rplidar_ros .
+If you are using ROS (Robot Operating System), please use our open-source ROS node directly: <https://github.com/slamtec/rplidar_ros> .
 
-If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(https://www.slamtec.com/robostudio) (currently only support Windows and Android) to do the evaulation.
+If you are just evaluating RPLIDAR, you can use Slamtec RoboStudio(<https://www.slamtec.com/robostudio>) (currently only support Windows and Android) to do the evaulation.
 
-License
--------
+## License
 
 The SDK itself is licensed under BSD 2-clause license.
 The demo applications are licensed under GPLv3 license.
 
-Release Notes
--------------
+## Release Notes
+
 * [v2.0.0](https://github.com/Slamtec/rplidar_sdk/tree/feature/release-2.0/docs/ReleaseNote.v2.0.0.md)
 * [v1.12.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.12.0.md)
 * [v1.11.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.11.0.md)
@@ -29,8 +26,7 @@ Release Notes
 * [v1.8.1](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.1.md)
 * [v1.8.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.8.0.md)
 
-Supported Platforms
--------------------
+## Supported Platforms
 
 RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 and 2019 projects and Makefile.
 
@@ -41,9 +37,9 @@ RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 and 20
 | A3                     | Yes     | Yes   | Yes   |
 | S1                     | Yes     | Yes   | Yes   |
 | S2                     | Yes     | Yes   | Yes   |
+| S3                     | Yes     | Yes   | Yes   |
 
-Quick Start
------------
+## Quick Start
 
 ### On Windows
 
@@ -58,8 +54,7 @@ Please make sure you have make and g++ installed, and then just invoke make in t
 
 The Makefile compiles Release build by default, and you can also use `make DEBUG=1` to compile Debug builds.
 
-Cross Compile
--------------
+## Cross Compile
 
 The Makefile system used by RPLIDAR public SDK support cross compiling.
 
@@ -67,8 +62,7 @@ The following command can be used to cross compile the SDK for `arm-linux-gnueab
 
     CROSS_COMPILE_PREFIX=arm-linux-gnueabihf ./cross_compile.sh
 
-Demo Applications
------------------
+## Demo Applications
 
 RPLIDAR public SDK includes some simple demos to do fast evaulation:
 
@@ -83,7 +77,9 @@ For instance:
     ultra_simple \\.\COM11  # on Windows
     ultra_simple /dev/ttyUSB0
 
-> Note: Usually you need root privilege to access tty devices under Linux. To eliminate this limitation, please add `KERNEL=="ttyUSB*", MODE="0666"` to the configuration of udev, and reboot.
+> Note: Usually you need root privilege to access tty devices under Linux. To eliminate this limitation, please add `KERNEL=="ttyUSB*", MODE="0666"` to the configuration of udev, and reboot. Or use the following command to modify the permissions of /dev/ttyUSB0
+
+    sudo chmod 666 /dev/ttyUSB0
 
 ### simple_grabber
 
@@ -93,12 +89,16 @@ This application demonstrates the process of getting RPLIDAR’s serial number, 
 
 This demo application can show real-time laser scans in the GUI and is only available on Windows platform.
 
-We have stopped the development of this demo application, please use Slamtec RoboStudio (https://www.slamtec.com/robostudio) instead.
+We have stopped the development of this demo application, please use Slamtec RoboStudio (<https://www.slamtec.com/robostudio>) instead.
 
-SDK Usage
----------
+## SDK Usage
 
-> For detailed documents of RPLIDAR SDK, please refer to our user manual: https://download.slamtec.com/api/download/rplidar-sdk-manual/1.0?lang=en
+> For detailed documents of RPLIDAR SDK, please refer to our user manual:
+>
+> [SDK用户手册](https://bucket-download.slamtec.com/6a128ec31e98b713a855a4f40648f5accb0a699a/LR002_SLAMTEC_rplidar_sdk_v2.0_cn.pdf)
+>
+> [SDK User Manual](https://bucket-download.slamtec.com/6957283725b66750890024d1f0d12940fa079e06/LR002_SLAMTEC_rplidar_sdk_v2.0_en.pdf)
+>
 
 ### Include Header
 
@@ -111,36 +111,37 @@ Usually you only need to include this file to get all functions of RPLIDAR SDK.
 For example:
 
     #include "sl_lidar.h" 
-	#include "sl_lidar_driver.h"
+    #include "sl_lidar_driver.h"
 
     int main(int argc, char* argv)
     {
-	    ///  Create a communication channel instance
-	    IChannel* _channel;
-	    Result<ISerialChannel*> channel = createSerialPortChannel("/dev/ttyUSB0", 115200);
-	    ///  Create a LIDAR driver instance
+        //  Create a communication channel instance
+        IChannel* _channel;
+        Result<ISerialChannel*> channel = createSerialPortChannel("/dev/ttyUSB0", 115200);
+        //  Create a LIDAR driver instance
         ILidarDriver * lidar = *createLidarDriver();
-	    auto res = (*lidar)->connect(*channel);
-	    if(SL_IS_OK(res)){
-	        sl_lidar_response_device_info_t deviceInfo;
+        auto res = (*lidar)->connect(*channel);
+        if(SL_IS_OK(res)){
+            sl_lidar_response_device_info_t deviceInfo;
             res = (*lidar)->getDeviceInfo(deviceInfo);
             if(SL_IS_OK(res)){
-	            printf("Model: %d, Firmware Version: %d.%d, Hardware Version: %d\n",
+             printf("Model: %d, Firmware Version: %d.%d, Hardware Version: %d\n",
                 deviceInfo.model,
                 deviceInfo.firmware_version >> 8, deviceInfo.firmware_version & 0xffu,
                 deviceInfo.hardware_version);
             }else{
-                fprintf(stderr, "Failed to get device information from LIDAR %08x\r\n", res);
+            fprintf(stderr, "Failed to get device information from LIDAR %08x\r\n", res);
             }
         }else{
             fprintf(stderr, "Failed to connect to LIDAR %08x\r\n", res);
         }
         // TODO
-		
-        /// Delete Lidar Driver and channel Instance
+  
+        // Delete Lidar Driver and channel Instance
         * delete *lidar;
         * delete *channel;
     }
+
 ### Start spinning motor
 
 The LIDAR is not spinning by default for A1, A2 and A3. Method `startMotor()` is used to start this motor. If the Lidar is S1 or S2, please skip this step.
@@ -215,8 +216,7 @@ For example:
     float angle_in_degrees = node.angle_z_q14 * 90.f / (1 << 14);
     float distance_in_meters = node.dist_mm_q2 / 1000.f / (1 << 2);
 
-Contact Slamtec
----------------
+## Contact Slamtec
 
 If you have any extra questions, please feel free to contact us at our support email:
 
