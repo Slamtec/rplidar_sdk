@@ -34,6 +34,7 @@
 static const int baudRateLists[] = {
     115200,
     256000,
+    460800,
     1000000
 };
 
@@ -150,6 +151,7 @@ LRESULT CChooseConnectionDlg::OnConnectionTypeClicked(WORD /*wNotifyCode*/, WORD
 }
 LRESULT CChooseConnectionDlg::OnAutoDiscoveryClicked(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
+#ifndef CONF_DISABLE_DNSSD
     CAutoDiscoveryDlg device_discovery;
     if (device_discovery.DoModal() == IDCANCEL)
     {
@@ -173,7 +175,7 @@ LRESULT CChooseConnectionDlg::OnAutoDiscoveryClicked(WORD /*wNotifyCode*/, WORD 
             }
         }
     }
-   
+#endif
     return 0;
 }
 

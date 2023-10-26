@@ -107,7 +107,7 @@ int main(int argc, const char * argv[]) {
     IChannel* _channel;
 
     printf("Ultra simple LIDAR data grabber for SLAMTEC LIDAR.\n"
-           "Version: %s\n", "SL_LIDAR_SDK_VERSION");
+           "Version: %s\n", SL_LIDAR_SDK_VERSION);
 
 	 
 	if (argc>1)

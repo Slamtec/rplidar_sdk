@@ -63,7 +63,7 @@ void print_usage(int argc, const char * argv[])
            "A3(256000),S1(256000),S2(1000000),S3(1000000)\n"
 		   " For udp channel %s --channel --udp <ipaddr> [port NO.]\n"
            "The LPX default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
-           , "SL_LIDAR_SDK_VERSION",  argv[0], argv[0]);
+           , SL_LIDAR_SDK_VERSION,  argv[0], argv[0]);
 }
 
 
