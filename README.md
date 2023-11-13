@@ -89,8 +89,6 @@ This application demonstrates the process of getting RPLIDAR’s serial number, 
 
 This demo application can show real-time laser scans in the GUI and is only available on Windows platform.
 
-We have stopped the development of this demo application, please use Slamtec RoboStudio (<https://www.slamtec.com/robostudio>) instead.
-
 ## SDK Usage
 
 > For detailed documents of RPLIDAR SDK, please refer to our user manual:
