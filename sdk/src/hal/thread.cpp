@@ -37,7 +37,7 @@
 
 #if defined(_WIN32)
 #include "arch/win32/winthread.hpp"
-#elif defined(_MACOS)
+#elif defined(__APPLE__)
 #include "arch/macOS/thread.hpp"
 #elif defined(__GNUC__)
 #include "arch/linux/thread.hpp"

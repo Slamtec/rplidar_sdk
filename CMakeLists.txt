@@ -2,26 +2,23 @@ cmake_minimum_required(VERSION 3.18)
 project(rplidar_sdk)
 
 if (NOT UNIX)
-    message(FATAL_ERROR "Only support Linux, sorry.")
+    message(FATAL_ERROR "Only support Unix, sorry.")
 endif()
 
-file(GLOB SRC_FILES
-    sdk/src/*.cpp 
-    sdk/src/hal/*.cpp 
-    sdk/src/arch/linux/*.cpp)
-
-file(GLOB INCLUDE_FILES
-    sdk/include/*.h
-    sdk/src/*.h 
-    sdk/src/*.hpp 
-    sdk/src/hal/*.h 
-    sdk/src/hal/*.hpp
-    sdk/src/arch/linux/*.h
-    sdk/src/arch/linux/*.hpp)
+if(LINUX)
+    file(GLOB SRC_FILES
+        sdk/src/*.cpp 
+        sdk/src/hal/*.cpp 
+        sdk/src/arch/linux/*.cpp)
+else() # macOS
+    file(GLOB SRC_FILES
+        sdk/src/*.cpp
+        sdk/src/hal/*.cpp
+        sdk/src/arch/macOS/*.cpp)
+endif()
 
 add_library(rplidar_sdk STATIC 
     ${SRC_FILES}
-    ${INCLUDE_FILES}
 )
 
 add_library(rplidar_sdk::rplidar_sdk ALIAS rplidar_sdk)
@@ -42,7 +39,6 @@ install(FILES ${PUBLIC_HEADER_FILES}
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/sdk/src/hal/types.h"
     DESTINATION include/hal
 )
-
 
 install(TARGETS rplidar_sdk
     EXPORT ${PROJECT_NAME}-targets
