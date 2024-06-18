@@ -24,6 +24,8 @@ add_library(rplidar_sdk STATIC
     ${INCLUDE_FILES}
 )
 
+add_library(rplidar_sdk::rplidar_sdk ALIAS rplidar_sdk)
+
 target_include_directories(rplidar_sdk
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/include>
