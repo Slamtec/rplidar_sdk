@@ -44,6 +44,19 @@ LRESULT CIpConfigDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lP
 {
     CenterWindow(GetParent());
     this->DoDataExchange();
+
+    sl_lidar_ip_conf_t conf;
+    sl_result ans = LidarMgr::GetInstance().lidar_drv->getLidarIpConf(conf);
+
+    if(SL_IS_FAIL(ans)){
+        MessageBoxA("Failed to get device Ip conf, if you want to get whole Ip conf,  please update firmware to the latest");
+
+    }
+    else {        
+        sprintf((char*)ip_, "%u.%u.%u.%u", conf.ip_addr[0], conf.ip_addr[1], conf.ip_addr[2], conf.ip_addr[3]);
+        sprintf((char*)mask_, "%u.%u.%u.%u", conf.net_mask[0], conf.net_mask[1], conf.net_mask[2], conf.net_mask[3]);
+        sprintf((char*)gw_, "%u.%u.%u.%u", conf.gw[0], conf.gw[1], conf.gw[2], conf.gw[3]);
+    }
     m_ip.SetWindowTextA(CString(ip_));
     m_mask.SetWindowTextA(CString(mask_));
     m_gw.SetWindowTextA(CString(gw_));
@@ -88,6 +101,9 @@ LRESULT CIpConfigDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOO
     else
         is_successful_ = true;
 
+
+
+    LidarMgr::GetInstance().lidar_drv->reset();
     EndDialog(wID);
     return 0;
 }

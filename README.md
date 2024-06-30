@@ -20,6 +20,7 @@ The demo applications are licensed under GPLv3 license.
 
 Release Notes
 -------------
+* [v2.1.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v2.1.0.md)
 * [v2.0.0](https://github.com/Slamtec/rplidar_sdk/tree/feature/release-2.0/docs/ReleaseNote.v2.0.0.md)
 * [v1.12.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.12.0.md)
 * [v1.11.0](https://github.com/slamtec/rplidar_sdk/blob/master/docs/ReleaseNote.v1.11.0.md)
@@ -41,6 +42,9 @@ RPLIDAR SDK supports Windows, macOS and Linux by using Visual Studio 2010 and 20
 | A3                     | Yes     | Yes   | Yes   |
 | S1                     | Yes     | Yes   | Yes   |
 | S2                     | Yes     | Yes   | Yes   |
+| S3                     | Yes     | Yes   | Yes   |
+| C1                     | Yes     | Yes   | Yes   |
+| T1                     | Yes     | Yes   | Yes   |
 
 Quick Start
 -----------

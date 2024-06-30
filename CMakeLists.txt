@@ -5,28 +5,32 @@ if (NOT UNIX)
     message(FATAL_ERROR "Only support Unix, sorry.")
 endif()
 
+file(GLOB SRC_FILES
+sdk/src/*.cpp
+sdk/src/dataunpacker/*.cpp
+sdk/src/dataunpacker/unpacker/*.cpp
+sdk/src/hal/*.cpp)
+
 if(LINUX)
-    file(GLOB SRC_FILES
-        sdk/src/*.cpp 
-        sdk/src/hal/*.cpp 
+file(GLOB EXTRA_SRC_FILES
         sdk/src/arch/linux/*.cpp)
 else() # macOS
-    file(GLOB SRC_FILES
-        sdk/src/*.cpp
-        sdk/src/hal/*.cpp
+    file(GLOB EXTRA_SRC_FILES
         sdk/src/arch/macOS/*.cpp)
 endif()
+
+list (APPEND SRC_FILES ${EXTRA_SRC_FILES})
 
 add_library(rplidar_sdk STATIC 
     ${SRC_FILES}
 )
-
 add_library(rplidar_sdk::rplidar_sdk ALIAS rplidar_sdk)
 
 target_include_directories(rplidar_sdk
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/src>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/sdk/src/dataunpacker>
         $<INSTALL_INTERFACE:include>
         # $<INSTALL_INTERFACE:sdk/src>
 )

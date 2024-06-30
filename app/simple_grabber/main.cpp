@@ -58,10 +58,12 @@ void print_usage(int argc, const char * argv[])
            "Version:  %s \n"
            "Usage:\n"
            " For serial channel %s --channel --serial <com port> [baudrate]\n"
-           "The baudrate is 115200(for A2) , 256000(for A3 and S1), 1000000(for S2).\n"
+           " The baudrate used by different models is as follows:\n"
+           "  A1(115200),A2M7(256000),A2M8(115200),A2M12(256000),"
+           "A3(256000),S1(256000),S2(1000000),S3(1000000)\n"
 		   " For udp channel %s --channel --udp <ipaddr> [port NO.]\n"
            "The LPX default ipaddr is 192.168.11.2,and the port NO.is 8089. Please refer to the datasheet for details.\n"
-           , "SL_LIDAR_SDK_VERSION",  argv[0], argv[0]);
+           , SL_LIDAR_SDK_VERSION,  argv[0], argv[0]);
 }
 
 
@@ -69,7 +71,7 @@ void plot_histogram(sl_lidar_response_measurement_node_hq_t * nodes, size_t coun
 {
     const int BARCOUNT =  75;
     const int MAXBARHEIGHT = 20;
-    const float ANGLESCALE = 360.0f/BARCOUNT;
+    // const float ANGLESCALE = 360.0f/BARCOUNT;
 
     float histogram[BARCOUNT];
     for (int pos = 0; pos < _countof(histogram); ++pos) {
@@ -140,11 +142,11 @@ sl_result capture_and_display(ILidarDriver * drv)
 }
 
 int main(int argc, const char * argv[]) {
-	const char * opt_channel = NULL;
-    const char * opt_channel_param_first = NULL;
-    sl_u32         opt_channel_param_second = 0;
-    sl_result     op_result;
-	int          opt_channel_type = CHANNEL_TYPE_SERIALPORT;
+	const char *opt_channel = NULL;
+    const char *opt_channel_param_first = NULL;
+    sl_u32      opt_channel_param_second = 0;
+    sl_result   op_result;
+	int         opt_channel_type = CHANNEL_TYPE_SERIALPORT;
 
     IChannel* _channel;
 
@@ -206,7 +208,7 @@ int main(int argc, const char * argv[]) {
 						, opt_channel_param_first);
 					break;
 				case CHANNEL_TYPE_UDP:
-					fprintf(stderr, "Error, cannot connect to the ip addr  %s with the udp port %s.\n"
+					fprintf(stderr, "Error, cannot connect to the ip addr %s with the udp port %u.\n"
 						, opt_channel_param_first, opt_channel_param_second);
 					break;
 			}

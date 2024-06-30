@@ -141,6 +141,7 @@ protected:
     //firmware 1.24
     std::vector<LidarScanMode> modeVec_;
 
+    std::string                     lidarModelName;
     sl_lidar_response_device_info_t devInfo;
     sl_lidar_response_device_macaddr_info_t devMac;
 

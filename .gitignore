@@ -9,3 +9,5 @@ output
 sdk/obj
 **/ipch
 build
+*.obj
+*.o
