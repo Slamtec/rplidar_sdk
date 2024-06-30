@@ -8,5 +8,6 @@ output
 *.sdf
 sdk/obj
 **/ipch
+build
 *.obj
 *.o
