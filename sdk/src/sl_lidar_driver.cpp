@@ -217,7 +217,7 @@ namespace sl {
 
                 size_t copiedCount = 0;
 
-                while (maxcount--) {
+                while (maxcount-- && !_data_queue.empty()) {
                     node[copiedCount++] = _data_queue.front();
                     _data_queue.pop_front();
                 }
