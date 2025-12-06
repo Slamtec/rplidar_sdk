@@ -124,7 +124,7 @@ CXX_INCLUDES += $(C_INCLUDES)
 # c99   - ISO C99 standard (not yet fully implemented)
 # gnu99 - c99 plus GCC extensions
 CSTANDARD = -std=gnu99
-CXXSTANDARD = -std=c++11
+CXXSTANDARD = -std=c++17
 CDEBUG = -g$(DEBUG_TYPE)
 CWARN = -Wall 
 CTUNING = -funsigned-char 
