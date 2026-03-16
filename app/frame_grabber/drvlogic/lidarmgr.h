@@ -27,12 +27,15 @@
 #pragma once
 #include "common.h"
 #include "..\..\sdk\src\hal\locker.h"
+#include "..\..\sdk\src\rplidar_driver_broadcast.h"
+#include <vector>
+#include <string>
 
 class LidarMgr {
 
 public:
     static LidarMgr & GetInstance();
-    
+
     LidarMgr();
     ~LidarMgr();
     bool onConnect(const char * port, int baudrate);
@@ -42,6 +45,20 @@ public:
     void onDisconnect();
     bool checkDeviceHealth(int * errorCode = NULL);
 
+    // Broadcast discovery support
+    bool initBroadcastDriver();
+    void shutdownBroadcastDriver();
+    bool isBroadcastDriverInitialized() const { return _broadcastDriver != NULL; }
+
+    sl_result discoverDevicesViaBroadcast(
+        std::vector<rplidar_response_broadcast_device_info_t>& devices,
+        sl_u32 timeout_ms = 1000);
+
+    sl_result setDeviceIpViaBroadcast(
+        const rplidar_payload_ip_set_related_t& ipConfig,
+        const sl_u8 serialNum[16],
+        sl_u32 timeout_ms = 2000);
+
 public:
     sl_lidar_response_device_info_t devinfo;
     static ILidarDriver * lidar_drv;
@@ -50,4 +67,7 @@ protected:
     static LidarMgr * g_instance;
     static rp::hal::Locker g_oplocker;
     bool  _isConnected;
+
+    // Broadcast driver
+    rp::standalone::rplidar::RPLidarBroadcastDriver* _broadcastDriver;
 };

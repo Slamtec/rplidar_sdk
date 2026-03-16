@@ -27,6 +27,9 @@
 #pragma once
 #include "hal/thread.h"
 #include "dns_sd.h"
+#include "rplidar_cmd.h"
+#include <vector>
+#include <set>
 
 typedef struct dev_info_t {
     char txtbuffer[200];
@@ -86,6 +89,18 @@ protected:
     static void HandleEvents(dev_info* dev_info_instance);
     static void generateListItemTxt(const int num, const char* hostname, int port, char* buffer, size_t buffersize);
     static int copyLabels(char* dst, const char* lim, const char** srcp, int labels);
+
+    // UDP Broadcast discovery support
+    rp::hal::Thread _broadcastThread;
+    volatile bool _broadcastRunning;
+    std::vector<rplidar_response_broadcast_device_info_t> _broadcastDevices;
+
+    sl_result _broadcastDiscoveryInit();
+    sl_result _broadcastDiscoveryThread();
+    void refreshBroadcastDevices();
+    static std::string formatMacAddress(const rplidar_response_device_macaddr_info_t& mac);
+    static std::string formatIpAddress(const sl_u8 ip[4]);
+
 public:
     LRESULT OnDoubleIpList(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 };

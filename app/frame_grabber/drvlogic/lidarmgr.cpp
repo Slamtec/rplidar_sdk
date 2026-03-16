@@ -49,6 +49,7 @@ LidarMgr & LidarMgr::GetInstance()
 
 LidarMgr::LidarMgr()
     : _isConnected(false)
+    , _broadcastDriver(NULL)
 {
 
 }
@@ -57,6 +58,7 @@ LidarMgr::~LidarMgr()
 {
     rp::hal::AutoLocker l(g_oplocker);
     onDisconnect();
+    shutdownBroadcastDriver();
     delete g_instance;
     g_instance = NULL;
     delete lidar_drv;
@@ -167,7 +169,7 @@ bool LidarMgr::onConnectUdp(const char * ipStr, sl_u32 port, sl_u32 flag)
         lidar_drv = *createLidarDriver();
 
     if (!(bool)lidar_drv) return SL_RESULT_OPERATION_FAIL;
-    
+
     sl_result ans =(lidar_drv)->connect(_channel);
 
     if (SL_IS_FAIL(ans)) {
@@ -182,4 +184,64 @@ bool LidarMgr::onConnectUdp(const char * ipStr, sl_u32 port, sl_u32 flag)
 
     _isConnected = true;
     return true;
+}
+
+bool LidarMgr::initBroadcastDriver()
+{
+    if (_broadcastDriver) {
+        return true;  // Already initialized
+    }
+
+    _broadcastDriver = new rp::standalone::rplidar::RPLidarBroadcastDriver();
+
+    // Get local Ethernet adapter IPs
+    std::set<std::string> adapterIPs = rp::net::UDPBroadcastChannel::getLocalEthernetIPs();
+    if (adapterIPs.empty()) {
+        delete _broadcastDriver;
+        _broadcastDriver = NULL;
+        return false;
+    }
+
+    std::vector<std::string> ipList(adapterIPs.begin(), adapterIPs.end());
+
+    sl_result ans = _broadcastDriver->init(ipList);
+    if (SL_IS_FAIL(ans)) {
+        delete _broadcastDriver;
+        _broadcastDriver = NULL;
+        return false;
+    }
+
+    return true;
+}
+
+void LidarMgr::shutdownBroadcastDriver()
+{
+    if (_broadcastDriver) {
+        _broadcastDriver->shutdown();
+        delete _broadcastDriver;
+        _broadcastDriver = NULL;
+    }
+}
+
+sl_result LidarMgr::discoverDevicesViaBroadcast(
+    std::vector<rplidar_response_broadcast_device_info_t>& devices,
+    sl_u32 timeout_ms)
+{
+    if (!_broadcastDriver) {
+        return SL_RESULT_OPERATION_FAIL;
+    }
+
+    return _broadcastDriver->getDeviceInfoViaBroadcast(devices, timeout_ms);
+}
+
+sl_result LidarMgr::setDeviceIpViaBroadcast(
+    const rplidar_payload_ip_set_related_t& ipConfig,
+    const sl_u8 serialNum[16],
+    sl_u32 timeout_ms)
+{
+    if (!_broadcastDriver) {
+        return SL_RESULT_OPERATION_FAIL;
+    }
+
+    return _broadcastDriver->setDeviceIpViaBroadcast(ipConfig, serialNum, timeout_ms);
 }

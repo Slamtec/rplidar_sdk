@@ -179,6 +179,8 @@
     <ClInclude Include="..\..\..\sdk\src\sdkcommon.h" />
     <ClInclude Include="..\..\..\sdk\src\sl_async_transceiver.h" />
     <ClInclude Include="..\..\..\sdk\src\sl_lidarprotocol_codec.h" />
+    <ClInclude Include="..\..\..\sdk\src\rplidar_driver_broadcast.h" />
+    <ClInclude Include="..\..\..\sdk\src\net\udp_broadcast_channel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\sdk\src\arch\win32\net_serial.cpp" />
@@ -197,6 +199,8 @@
     <ClCompile Include="..\..\..\sdk\src\sl_serial_channel.cpp" />
     <ClCompile Include="..\..\..\sdk\src\sl_tcp_channel.cpp" />
     <ClCompile Include="..\..\..\sdk\src\sl_udp_channel.cpp" />
+    <ClCompile Include="..\..\..\sdk\src\rplidar_driver_broadcast.cpp" />
+    <ClCompile Include="..\..\..\sdk\src\net\udp_broadcast_channel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

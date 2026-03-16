@@ -445,17 +445,16 @@ public:
     virtual u_result setTimeout(_u32 timeout, socket_direction_mask msk)
     {
         int ans;
-        timeval tv;
-        tv.tv_sec = timeout / 1000; 
-        tv.tv_usec = (timeout % 1000) * 1000; 
+        // Windows SO_RCVTIMEO/SO_SNDTIMEO expects DWORD in milliseconds
+        DWORD tv_ms = (DWORD)timeout;
 
         if (msk & SOCKET_DIR_RD) {
-             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, (int)sizeof(tv) );
+             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv_ms, (int)sizeof(tv_ms) );
              if (ans) return RESULT_OPERATION_FAIL;
         }
 
         if (msk & SOCKET_DIR_WR) {
-             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, (int)sizeof(tv) );
+             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv_ms, (int)sizeof(tv_ms) );
              if (ans) return RESULT_OPERATION_FAIL;
         }
 
@@ -695,7 +694,8 @@ public:
     {
         assert(fd>=0);
         int bool_true = 1;
-        ::setsockopt( _socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_BROADCAST , (char *)&bool_true, (int)sizeof(bool_true) );
+        ::setsockopt( _socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&bool_true, (int)sizeof(bool_true) );
+        ::setsockopt( _socket_fd, SOL_SOCKET, SO_BROADCAST, (char *)&bool_true, (int)sizeof(bool_true) );
         setTimeout(DEFAULT_SOCKET_TIMEOUT, SOCKET_DIR_BOTH);
     }
 
@@ -739,25 +739,24 @@ public:
     virtual u_result setTimeout(_u32 timeout, socket_direction_mask msk)
     {
         int ans;
-        timeval tv;
-        tv.tv_sec = timeout / 1000; 
-        tv.tv_usec = (timeout % 1000) * 1000; 
+        // Windows SO_RCVTIMEO/SO_SNDTIMEO expects DWORD in milliseconds
+        DWORD tv_ms = (DWORD)timeout;
 
         if (msk & SOCKET_DIR_RD) {
-             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, (int)sizeof(tv) );
+             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv_ms, (int)sizeof(tv_ms) );
              if (ans) return RESULT_OPERATION_FAIL;
         }
 
         if (msk & SOCKET_DIR_WR) {
-             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, (int)sizeof(tv) );
+             ans = ::setsockopt( _socket_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv_ms, (int)sizeof(tv_ms) );
              if (ans) return RESULT_OPERATION_FAIL;
         }
 
         return RESULT_OK;
     }
-  
 
-    virtual u_result waitforSent(_u32 timeout ) 
+
+    virtual u_result waitforSent(_u32 timeout )
     {
         fd_set wrset;
         FD_ZERO(&wrset);

@@ -176,12 +176,16 @@ void CAutoDiscoveryDlg::HandleEvents(dev_info *dev_info_instance)
 
 CAutoDiscoveryDlg::CAutoDiscoveryDlg()
     :portSel(-1)
+    , _broadcastRunning(false)
 {
     for (int pos = 0; pos < sizeof(ipSel) / sizeof(unsigned char); pos++)
         ipSel[pos] = 0;
 }
 CAutoDiscoveryDlg::~CAutoDiscoveryDlg()
 {
+    _broadcastRunning = false;
+    _broadcastThread.terminate();
+
     if (client)
     {
         DNSServiceRefDeallocate(client);
@@ -263,6 +267,7 @@ LRESULT CAutoDiscoveryDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
     CenterWindow(GetParent());
     this->DoDataExchange();
     _testingThrdInit();
+    _broadcastDiscoveryInit();  // Start UDP broadcast discovery
     m_edit_dev_type.SetWindowTextA("_lidar._udp");
     return TRUE;
 }
@@ -270,7 +275,9 @@ LRESULT CAutoDiscoveryDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM
 LRESULT CAutoDiscoveryDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     _thrdWorker.terminate();
-    
+    _broadcastRunning = false;  // Stop broadcast thread
+    _broadcastThread.terminate();
+
     if (client)
     {
         DNSServiceRefDeallocate(client);
@@ -284,6 +291,8 @@ LRESULT CAutoDiscoveryDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/
 LRESULT CAutoDiscoveryDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     _thrdWorker.terminate();
+    _broadcastRunning = false;  // Stop broadcast thread
+    _broadcastThread.terminate();
     if (client)
     {
         DNSServiceRefDeallocate(client);
@@ -297,14 +306,21 @@ LRESULT CAutoDiscoveryDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndC
 LRESULT CAutoDiscoveryDlg::OnRefresh(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     _thrdWorker.terminate();
-    int size = m_list_ip.GetCount();
-    if (size)
-    {   
-        size--;
-        m_list_ip.DeleteString(size);
+
+    // Signal broadcast thread to stop and wait for it to finish
+    _broadcastRunning = false;
+    _broadcastThread.join(3000);
+
+    // Clear device list
+    while (m_list_ip.GetCount() > 0) {
+        m_list_ip.DeleteString(0);
     }
+    info_list.clear();
+    _broadcastDevices.clear();
+
     _testingThrdInit();
-   
+    _broadcastDiscoveryInit();  // Restart broadcast discovery (3 times, 1s interval)
+
     return 0;
 }
 
@@ -333,4 +349,104 @@ LRESULT CAutoDiscoveryDlg::OnDoubleIpList(WORD /*wNotifyCode*/, WORD /*wID*/, HW
         protocol = "UDP";
     }
     return 0;
+}
+
+// UDP Broadcast Discovery Implementation
+#include "drvlogic/lidarmgr.h"
+
+sl_result CAutoDiscoveryDlg::_broadcastDiscoveryInit()
+{
+    _broadcastRunning = true;
+    _broadcastDevices.clear();
+
+    // Initialize broadcast driver in LidarMgr
+    if (!LidarMgr::GetInstance().initBroadcastDriver()) {
+        return SL_RESULT_OPERATION_FAIL;
+    }
+
+    // Start broadcast discovery thread
+    _broadcastThread = CLASS_THREAD(CAutoDiscoveryDlg, _broadcastDiscoveryThread);
+    return SL_RESULT_OK;
+}
+
+sl_result CAutoDiscoveryDlg::_broadcastDiscoveryThread()
+{
+    // Broadcast 3 times with 1 second interval
+    for (int i = 0; i < 3; i++) {
+        if (!_broadcastRunning || !_dialog_alive) {
+            break;
+        }
+
+        // Send broadcast and collect responses (500ms window)
+        std::vector<rplidar_response_broadcast_device_info_t> devices;
+        sl_result ans = LidarMgr::GetInstance().discoverDevicesViaBroadcast(devices, 500);
+
+        if (SL_IS_OK(ans) && !devices.empty()) {
+            for (const auto& dev : devices) {
+                _broadcastDevices.push_back(dev);
+            }
+            refreshBroadcastDevices();
+        }
+
+        // Wait ~500ms in short intervals so we can respond to stop signal quickly
+        if (i < 2) {
+            for (int w = 0; w < 10 && _broadcastRunning && _dialog_alive; w++) {
+                Sleep(50);
+            }
+        }
+    }
+
+    _broadcastRunning = false;
+    return SL_RESULT_OK;
+}
+
+void CAutoDiscoveryDlg::refreshBroadcastDevices()
+{
+    // Format and add broadcast discovered devices to list
+    for (const auto& device : _broadcastDevices) {
+        std::string mac = formatMacAddress(device.dev_mac_addr);
+        std::string ip = formatIpAddress(device.dev_ip_info.ip_addr);
+        int port = device.data_server_port;
+
+        // Create display text: "RPLIDAR-MAC : IP:port"
+        char buffer[256];
+        sprintf_s(buffer, sizeof(buffer), "RPLIDAR-%s : %s:%d",
+                  mac.c_str(), ip.c_str(), port);
+
+        // Check if already in list
+        bool found = false;
+        int count = m_list_ip.GetCount();
+        for (int i = 0; i < count; i++) {
+            char existing[256];
+            m_list_ip.GetText(i, existing);
+            if (strcmp(existing, buffer) == 0) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            m_list_ip.AddString(buffer);
+
+            // Add to info_list for double-click handling
+            info_list.push_back(std::make_pair(ip, port));
+        }
+    }
+}
+
+std::string CAutoDiscoveryDlg::formatMacAddress(const rplidar_response_device_macaddr_info_t& mac)
+{
+    char buffer[32];
+    sprintf_s(buffer, sizeof(buffer), "%02X%02X%02X%02X%02X%02X",
+              mac.macaddr[0], mac.macaddr[1], mac.macaddr[2],
+              mac.macaddr[3], mac.macaddr[4], mac.macaddr[5]);
+    return std::string(buffer);
+}
+
+std::string CAutoDiscoveryDlg::formatIpAddress(const sl_u8 ip[4])
+{
+    char buffer[32];
+    sprintf_s(buffer, sizeof(buffer), "%d.%d.%d.%d",
+              ip[0], ip[1], ip[2], ip[3]);
+    return std::string(buffer);
 }

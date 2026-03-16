@@ -68,6 +68,10 @@
 #define RPLIDAR_CMD_SET_MOTOR_PWM           SL_LIDAR_CMD_SET_MOTOR_PWM
 #define RPLIDAR_CMD_GET_ACC_BOARD_FLAG      SL_LIDAR_CMD_GET_ACC_BOARD_FLAG
 
+// UDP Broadcast Commands 
+#define RPLIDAR_CMD_GET_BROADCAST_DEVICE_INFO    0x5C
+#define RPLIDAR_CMD_SET_BROADCAST_DEVICE_ETH_INFO 0x80
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
@@ -97,6 +101,18 @@ typedef sl_lidar_payload_acc_board_flag_t rplidar_payload_acc_board_flag_t;
 typedef sl_lidar_payload_set_scan_conf_t  rplidar_payload_set_scan_conf_t;
 typedef sl_lidar_payload_new_bps_confirmation_t  rplidar_payload_new_bps_confirmation_t;
 
+// UDP Broadcast Payload (for TOF devices)
+typedef struct _rplidar_payload_ip_set_related_t {
+    _u8 ip_addr[4];
+    _u8 net_mask[4];
+    _u8 gw[4];
+}
+#if defined(_WIN32)
+    rplidar_payload_ip_set_related_t;
+#else
+    __attribute__((packed)) rplidar_payload_ip_set_related_t;
+#endif
+
 // Response
 // ------------------------------------------
 #define RPLIDAR_ANS_TYPE_DEVINFO                                 SL_LIDAR_ANS_TYPE_DEVINFO
@@ -116,6 +132,9 @@ typedef sl_lidar_payload_new_bps_confirmation_t  rplidar_payload_new_bps_confirm
 #define RPLIDAR_ANS_TYPE_MEASUREMENT_ULTRA_DENSE_CAPSULED        SL_LIDAR_ANS_TYPE_MEASUREMENT_ULTRA_DENSE_CAPSULED
 
 #define RPLIDAR_ANS_TYPE_ACC_BOARD_FLAG                          SL_LIDAR_ANS_TYPE_ACC_BOARD_FLAG
+
+// UDP Broadcast Response Type (for TOF devices)
+#define RPLIDAR_ANS_TYPE_BROADCAST_DEVICE_INFO                   0xC
 
 #define RPLIDAR_RESP_ACC_BOARD_FLAG_MOTOR_CTRL_SUPPORT_MASK      SL_LIDAR_RESP_ACC_BOARD_FLAG_MOTOR_CTRL_SUPPORT_MASK
 
@@ -196,6 +215,55 @@ typedef sl_lidar_response_device_info_t          rplidar_response_device_info_t;
 typedef sl_lidar_response_device_health_t        rplidar_response_device_health_t;
 typedef sl_lidar_ip_conf_t                       rplidar_ip_conf_t;
 typedef sl_lidar_response_device_macaddr_info_t  rplidar_response_device_macaddr_info_t;
+
+// UDP Broadcast Response Structures (for TOF devices)
+typedef struct _rplidar_response_complete_device_info_t {
+    _u32 model_type;
+    _u32 submodel_type;
+    _u32 hardware_version;
+    _u8  model_name[16];
+    _u8  model_suffix[16];
+    _u8  serialnum[16];
+    _u32 device_type;
+    _u16 technology_type;
+    _u8  device_interface_type;
+    _u16 firmware_version;
+    _u8  extended_info_version;
+    _u8  extended_info[12];
+}
+#if defined(_WIN32)
+    rplidar_response_complete_device_info_t;
+#else
+    __attribute__((packed)) rplidar_response_complete_device_info_t;
+#endif
+
+typedef struct _rplidar_response_broadcast_device_info_t {
+    /*--------------------basic information----------------------*/
+    rplidar_response_complete_device_info_t dev_info;
+    rplidar_response_device_health_t        health_info;
+    /*-------------Local Network Basic Information----------------*/
+    rplidar_payload_ip_set_related_t        dev_ip_info;
+    rplidar_response_device_macaddr_info_t  dev_mac_addr;
+    _u16                                    data_server_port;
+    _u16                                    reserved1[4];
+    /*--------Remote Broadcast Network Basic Information---------*/
+    _u8                                     remote_ip_addr[4];
+    _u16                                    remote_port;
+    _u16                                    reserved2[4];
+    /*-----------------Versiontag Information------------------*/
+    _u32  unified_version;
+    _u16  unified_hwver;
+    _s8   version_suffix[11]; //without null ending
+    _s8   build_date[11];     //without null ending
+    _s8   build_time[8];      //without null ending
+    /*-----------------------Reserved--------------------------*/
+    _u8 reserved[26];
+}
+#if defined(_WIN32)
+    rplidar_response_broadcast_device_info_t;
+#else
+    __attribute__((packed)) rplidar_response_broadcast_device_info_t;
+#endif
 
 // Definition of the variable bit scale encoding mechanism
 #define RPLIDAR_VARBITSCALE_X2_SRC_BIT  SL_LIDAR_VARBITSCALE_X2_SRC_BIT
