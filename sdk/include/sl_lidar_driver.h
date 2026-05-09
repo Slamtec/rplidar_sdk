@@ -35,6 +35,7 @@
 #error "The Slamtec LIDAR SDK requires a C++ compiler to be built"
 #endif
 
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <string>
@@ -56,6 +57,8 @@
 #include <string>
 
 namespace sl {
+
+using std::nullptr_t;
 
 #ifdef DEPRECATED
 #define DEPRECATED_WARN(fn, replacement) do { \

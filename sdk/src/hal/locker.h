@@ -71,7 +71,7 @@ public:
         }
 
 #else
-#ifdef _MACOS
+#ifdef __APPLE__
         if (timeout !=0 ) {
             if (pthread_mutex_lock(&_lock) == 0) return LOCK_OK;
         }
@@ -84,7 +84,7 @@ public:
         {
             if (pthread_mutex_trylock(&_lock) == 0) return LOCK_OK;
         }
-#ifndef _MACOS
+#ifndef __APPLE__
         else
         {
             timespec wait_time;
